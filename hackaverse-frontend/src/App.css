@@ -1,0 +1,12 @@
+#root {
+  width: 100%;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* Remove default padding and text-align for better layout control */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}

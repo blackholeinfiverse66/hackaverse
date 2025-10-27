@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HackaVerse Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style type="text/tailwindcss">
+    /* Custom CSS Variables */
+    :root {
+      --primary-cyan: #00ffff;
+      --primary-purple: #800080;
+      --accent-gold: #ffd700;
+      --bg-dark: #000;
+      --bg-mid: #1a1a2e;
+      --bg-light: #16213e;
+    }
+
+    /* Custom Body Styles */
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark), var(--bg-mid), var(--bg-light));
+      color: #fff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated Star Field */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, #ffffff, transparent),
+        radial-gradient(1px 1px at 20% 40%, #ffffff, transparent),
+        radial-gradient(1px 1px at 30% 60%, #ffffff, transparent),
+        radial-gradient(1px 1px at 40% 80%, #ffffff, transparent),
+        radial-gradient(1px 1px at 50% 10%, #ffffff, transparent),
+        radial-gradient(1px 1px at 60% 30%, #ffffff, transparent),
+        radial-gradient(1px 1px at 70% 50%, #ffffff, transparent),
+        radial-gradient(1px 1px at 80% 70%, #ffffff, transparent),
+        radial-gradient(1px 1px at 90% 90%, #ffffff, transparent),
+        radial-gradient(2px 2px at 15% 85%, var(--primary-cyan), transparent),
+        radial-gradient(2px 2px at 85% 15%, var(--primary-purple), transparent),
+        radial-gradient(1px 1px at 25% 75%, var(--accent-gold), transparent);
+      background-size: 100% 100%;
+      animation: twinkle 3s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: -1;
+      will-change: opacity, transform;
+    }
+
+    /* Floating Grid Pattern */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.1) 50%, transparent 51%),
+        linear-gradient(-45deg, transparent 49%, rgba(0, 255, 255, 0.05) 50%, transparent 51%);
+      background-size: 20px 20px, 30px 30px;
+      animation: drift 20s linear infinite;
+      pointer-events: none;
+      z-index: -1;
+      will-change: transform;
+    }
+
+    /* Keyframe Animations */
+    @keyframes twinkle {
+      0% {
+        opacity: 0.3;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+      }
+      100% {
+        opacity: 0.3;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes drift {
+      0% {
+        transform: translate(-100px, -100px);
+      }
+      100% {
+        transform: translate(100px, 100px);
+      }
+    }
+
+    /* Custom Utility Classes */
+    @layer utilities {
+      .hover-glow {
+        transition: all 0.3s ease;
+      }
+
+      .hover-glow:hover {
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        transform: translateY(-2px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex items-center justify-center p-8">
+    <div class="max-w-2xl mx-auto text-center">
+      <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+        HackaVerse
+      </h1>
+      <p class="text-xl mb-8 text-gray-300">
+        A Universe of Builders - AI-driven hackathons connecting creators across campuses.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button class="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold py-3 px-6 rounded-lg hover-glow">
+          Join Hackathon
+        </button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover-glow">
+          View Leaderboard
+        </button>
+      </div>
+      <div class="mt-12 p-8 bg-white/10 backdrop-blur-sm rounded-lg hover-glow">
+        <h2 class="text-2xl font-semibold mb-4">Demo Content</h2>
+        <p class="text-lg text-gray-300">
+          This demonstrates the animated cosmic background with twinkling stars and floating grid patterns,
+          along with custom hover effects using the .hover-glow utility class.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
