@@ -7,34 +7,97 @@ export default {
   theme: {
     extend: {
       colors: {
-        'deep-navy': '#0D1128',
-        'navy': '#15193B',
-        'purple-primary': '#BF40BF',
-        'magenta-primary': '#C030D8',
-        'cyan-accent': '#00F2EA',
-        'text-light': '#EAEAF2',
+        // Core theme colors
+        'bg-primary': '#0a0a0a',
+        'bg-secondary': '#111111',
+        'bg-card': '#1a1a1a',
+        'text-primary': '#ffffff',
+        'text-secondary': '#a1a1aa',
+        'text-muted': '#71717a',
+        'cyan': '#06b6d4',
+        'cyan-light': '#22d3ee',
+        'violet': '#8b5cf6',
+        'lime': '#84cc16',
+        'success': '#10b981',
+        'warning': '#f59e0b',
+        'error': '#ef4444',
+        'deep-navy': '#0A0F25',
+        'bg-deep-navy': '#0A0F25',
+        'bg-navy': '#121A3A',
+        'navy': '#121A3A',
+        'bg-card': '#1A2445',
+        'primary-purple': '#8A2BE2',
+        'primary-magenta': '#DC143C',
+        'secondary-cyan': '#00CED1',
+        'text-white': '#FFFFFF',
+        'text-light': '#E6E6FA',
+        'text-muted': '#B0B0C0',
+        'accent-gold': '#FFD700',
+        'success-green': '#32CD32',
+        'warning-orange': '#FF8C00',
+        'error-red': '#FF4500',
+        // New brand colors
+        'brand': {
+          '50': '#ECF3FF',
+          '200': '#9EC2FF',
+          '400': '#6CCAFF',
+          '500': '#4AA8FF',
+          '600': '#338AFF',
+          '700': '#1B6AEC'
+        },
+        'plasma': {
+          '400': '#8A6CFF',
+          '500': '#7C4DFF'
+        },
+        'ink': {
+          '900': '#0B1422',
+          '800': '#0F1C2C'
+        },
+        'panel': {
+          'bg': 'rgba(255,255,255,0.03)',
+          'border': 'rgba(255,255,255,0.10)'
+        },
+        'ok': '#22C55E',
+        'warn': '#F59E0B',
+        'err': '#F43F5E',
         // Legacy support
         'bhiv-black': '#0D1128',
         'uni-white': '#ffffff',
         'accent-cyan': '#00F2EA',
         'accent-purple': '#BF40BF',
         'accent-gold': '#ffd700',
+        // Additional colors for components
+        'cyan': '#00CED1',
+        'cyan-light': '#00F2EA',
+        'violet': '#8A2BE2',
+        'lime': '#32CD32',
+        'success': '#32CD32',
+        'warning': '#FF8C00',
+        'error': '#FF4500',
+        'text-primary': '#FFFFFF',
+        'text-secondary': '#E6E6FA',
+        'text-muted': '#B0B0C0',
+        'bg-primary': '#0A0F25',
+        'bg-secondary': '#121A3A',
+        'charcoal': '#0D1128',
+        'gunmetal': '#2A2A2A',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Space Grotesk', 'Inter', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #BF40BF, #00F2EA)',
-        'gradient-glow': 'linear-gradient(135deg, #C030D8, #00F2EA)',
+        'gradient-primary': 'linear-gradient(135deg, #8A2BE2, #00CED1)',
+        'gradient-glow': 'linear-gradient(135deg, #DC143C, #00CED1)',
       },
       boxShadow: {
-        'glow': '0 0 40px rgba(191, 64, 191, 0.3), 0 0 60px rgba(0, 242, 234, 0.2)',
-        'glow-cyan': '0 0 40px rgba(0, 242, 234, 0.4)',
-        'glow-purple': '0 0 40px rgba(191, 64, 191, 0.4)',
+        'glow': '0 0 40px rgba(138, 43, 226, 0.3), 0 0 60px rgba(0, 206, 209, 0.2)',
+        'glow-cyan': '0 0 40px rgba(0, 206, 209, 0.4)',
+        'glow-purple': '0 0 40px rgba(138, 43, 226, 0.4)',
+        'card': '0 10px 30px -15px rgba(0,0,0,.6)',
+        'glow-brand': '0 0 0 1px rgba(108,202,255,.25), 0 10px 30px -12px rgba(124,77,255,.35)'
       },
     },
   },
   plugins: [],
 }
-

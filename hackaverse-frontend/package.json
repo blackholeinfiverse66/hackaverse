@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:3000": "cross-env PORT=3000 vite",
+    "dev:3001": "cross-env PORT=3001 vite",
+    "mock-server": "node server.js",
+    "mock-server:3002": "cross-env MOCK_API_PORT=3002 node server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -12,6 +16,7 @@
   "dependencies": {
     "@iconscout/unicons": "^4.2.0",
     "axios": "^1.12.2",
+    "express": "^5.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4"
@@ -22,6 +27,7 @@
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.1.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
