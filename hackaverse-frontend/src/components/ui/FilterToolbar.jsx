@@ -149,7 +149,7 @@ const FilterToolbar = ({
               onChange={(e) => onSearchChange(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setSearchFocused(false)}
-              className="w-full h-11 lg:h-[44px] pl-10 pr-10 bg-white/5 border border-white/10 rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-cyan/50 transition-colors"
+              className="w-full h-11 pl-10 pr-10 bg-white/5 border border-white/10 rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-cyan/50 transition-colors"
             />
             {searchValue && (
               <button
@@ -164,7 +164,7 @@ const FilterToolbar = ({
 
         {/* Filters */}
         {filters.map((filter, idx) => (
-          <div key={idx} className="w-40 lg:w-48 h-11 lg:h-[44px]">
+          <div key={idx} className="w-40 h-11">
             <SelectDropdown filter={filter} />
           </div>
         ))}
@@ -178,14 +178,14 @@ const FilterToolbar = ({
         <div className="flex items-center gap-2">
           <button
             onClick={onReset}
-            className="h-11 lg:h-[44px] px-4 text-sm text-text-muted hover:text-white border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
+            className="h-11 px-4 text-sm text-text-muted hover:text-white border border-white/10 rounded-xl hover:bg-white/5 transition-colors"
           >
             Reset
           </button>
           <button
             onClick={onApply}
             disabled={!hasChanges}
-            className="h-11 lg:h-[44px] px-6 text-sm bg-cyan hover:bg-cyan-light disabled:bg-white/10 disabled:text-text-muted text-black font-medium rounded-xl transition-colors"
+            className="h-11 px-6 text-sm bg-cyan hover:bg-cyan-light disabled:bg-white/10 disabled:text-text-muted text-black font-medium rounded-xl transition-colors"
           >
             Apply
           </button>

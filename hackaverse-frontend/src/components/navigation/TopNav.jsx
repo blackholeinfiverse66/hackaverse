@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import NotificationDropdown from '../ui/NotificationDropdown';
 
 const GlobalSearch = ({ onFocus, onBlur, isFocused }) => {
   const [query, setQuery] = useState('');
@@ -133,73 +134,49 @@ const GlobalSearch = ({ onFocus, onBlur, isFocused }) => {
   );
 };
 
-const NotificationsPopover = ({ isOpen }) => {
-  const [activeTab, setActiveTab] = useState('all');
-  const notifications = [
-    { id: 1, title: 'New comment on your project', meta: '2 minutes ago', unread: true },
-    { id: 2, title: 'Team invitation received', meta: '1 hour ago', unread: true },
-    { id: 3, title: 'Submission deadline reminder', meta: '3 hours ago', unread: false }
-  ];
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="absolute top-full right-0 mt-2 w-[360px] rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur glass-card shadow-[0_10px_30px_-15px_rgba(0,0,0,.6)] z-50">
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-white">Notifications</h3>
-          <button className="text-sm text-[#6CCAFF] hover:text-[#4AA8FF] transition-colors">
-            Mark all read
-          </button>
-        </div>
-        <div className="flex gap-1">
-          {['all', 'mentions'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors capitalize ${
-                activeTab === tab 
-                  ? 'bg-[#6CCAFF]/20 text-[#6CCAFF]' 
-                  : 'text-white/60 hover:text-white/80'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="max-h-80 overflow-y-auto">
-        {notifications.map(notification => (
-          <div
-            key={notification.id}
-            className="p-3 border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm text-white">{notification.title}</p>
-                <p className="text-xs text-white/60 mt-1">{notification.meta}</p>
-              </div>
-              {notification.unread && (
-                <div className="w-2 h-2 bg-[#6CCAFF] rounded-full mt-1 ml-2"></div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const TopNav = ({ user, onLogout, sidebarWidth = 264 }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const hasUnreadNotifications = true;
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  const notificationRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notificationsOpen && notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
+      if (userMenuOpen && userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setNotificationsOpen(false);
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [notificationsOpen, userMenuOpen]);
 
   return (
-    <header 
-      className="fixed top-0 right-0 h-16 bg-[#0B1422]/80 backdrop-blur border-b border-white/10 glass-card z-20"
-      style={{ left: `${sidebarWidth}px` }}
+    <header
+      className="fixed top-0 right-0 h-16 bg-[#0B1422]/80 backdrop-blur-lg border-b border-white/10 glass-card z-20"
+      style={{
+        left: `${sidebarWidth}px`,
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)'
+      }}
     >
       <div className="h-16 grid grid-cols-[1fr_auto] items-center gap-4 px-6 xl:px-8">
         {/* Search */}
@@ -214,25 +191,32 @@ const TopNav = ({ user, onLogout, sidebarWidth = 264 }) => {
           {/* Notifications */}
           <div className="relative">
             <button
+              ref={notificationRef}
               onClick={() => setNotificationsOpen(!notificationsOpen)}
               className="relative h-10 w-10 rounded-xl border border-white/15 bg-white/[0.02] hover:bg-white/[0.06] transition-colors flex items-center justify-center"
+              aria-label="Toggle notifications"
+              aria-expanded={notificationsOpen}
             >
               <i className="uil uil-bell text-white/70 min-w-[20px]"></i>
               {hasUnreadNotifications && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#6CCAFF] rounded-full animate-pulse"></div>
               )}
             </button>
-            <NotificationsPopover 
+            <NotificationDropdown
               isOpen={notificationsOpen}
               onClose={() => setNotificationsOpen(false)}
+              triggerRef={notificationRef}
             />
           </div>
 
           {/* User Menu */}
           <div className="relative">
             <button
+              ref={userMenuRef}
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-2 h-10 px-3 rounded-xl border border-white/15 bg-white/[0.02] hover:bg-white/[0.06] transition-colors"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
             >
               <div className="w-6 h-6 rounded-full overflow-hidden">
                 <img src={user?.avatar} alt={user?.name} className="w-full h-full object-cover" />
@@ -240,7 +224,7 @@ const TopNav = ({ user, onLogout, sidebarWidth = 264 }) => {
               <span className="text-sm text-white font-medium">{user?.name}</span>
               <i className="uil uil-angle-down text-white/70"></i>
             </button>
-            
+
             {userMenuOpen && (
               <div className="absolute top-full right-0 mt-2 w-48 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur glass-card shadow-[0_10px_30px_-15px_rgba(0,0,0,.6)] z-50">
                 <div className="p-2">
@@ -257,7 +241,7 @@ const TopNav = ({ user, onLogout, sidebarWidth = 264 }) => {
                     Settings
                   </button>
                   <hr className="border-white/10 my-2" />
-                  <button 
+                  <button
                     onClick={onLogout}
                     className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/[0.05] text-sm text-red-400 transition-colors"
                   >

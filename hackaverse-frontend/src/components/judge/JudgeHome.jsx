@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const JudgeHome = () => {
+  const { logout } = useAuth();
   const [stats] = useState({
     pendingReviews: 23,
     completedReviews: 45,
@@ -49,7 +51,7 @@ const JudgeHome = () => {
 
   return (
     <div className="min-h-screen pt-0">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
           <div className="space-y-2">
@@ -109,26 +111,26 @@ const JudgeHome = () => {
             <div className="divide-y divide-white/5">
               {recentSubmissions.map(submission => (
                 <div key={submission.id} className="p-5 hover:bg-white/5 transition-colors cursor-pointer">
-                  <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-4 items-center">
+                  <div className="grid grid-cols-[3fr_1fr_1fr_auto] gap-6 items-center">
                     <div className="min-w-0">
-                      <div className="font-medium text-white truncate" title={submission.title}>
+                      <div className="font-medium text-white text-sm leading-tight" title={submission.title}>
                         {submission.title}
                       </div>
-                      <div className="text-sm text-text-muted truncate">
+                      <div className="text-xs text-text-muted mt-1">
                         {submission.team} • {submission.track}
                       </div>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                       submission.status === 'pending'
                         ? 'bg-warning/20 text-warning'
                         : 'bg-success/20 text-success'
                     }`}>
                       {submission.status}
                     </span>
-                    <div className="text-sm text-text-muted">
+                    <div className="text-xs text-text-muted whitespace-nowrap">
                       {submission.updated}
                     </div>
-                    <button className="text-cyan hover:text-white transition-colors text-sm h-8 px-3 rounded border border-cyan/30 hover:bg-cyan/10">
+                    <button className="text-cyan hover:text-white transition-colors text-sm h-9 px-4 rounded-lg border border-cyan/30 hover:bg-cyan/10 whitespace-nowrap">
                       Review
                     </button>
                   </div>

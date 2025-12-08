@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import FilterToolbar from '../ui/FilterToolbar';
+import { useNavigate } from 'react-router-dom';
+import ProjectDetailView from '../ui/ProjectDetailView';
 import { apiService } from '../../services/api';
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     track: 'all',
@@ -14,7 +16,8 @@ const Projects = () => {
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
-  const [selectedItems] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -145,32 +148,35 @@ const Projects = () => {
   };
 
   const ProjectCard = ({ project }) => (
-    <div className="glass-card rounded-xl border p-6 hover:border-cyan/30 transition-all duration-200 cursor-pointer group">
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white group-hover:text-cyan transition-colors leading-tight">
+    <div
+      className="glass-card rounded-xl border border-white/10 p-5 hover:border-cyan/40 hover:shadow-lg hover:shadow-cyan/10/20 transition-all duration-300 cursor-pointer group hover:transform hover:scale-[1.02]"
+      onClick={() => setSelectedProject(project)}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-lg font-semibold text-white group-hover:text-cyan transition-colors leading-tight line-clamp-2">
           {project.title}
         </h3>
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
           {project.status}
         </span>
       </div>
 
-      <div className="space-y-3 mb-6">
+      <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-white/10 rounded flex items-center justify-center">
             <i className="uil uil-users-alt text-text-muted text-xs"></i>
           </div>
-          <span className="text-text-secondary text-sm">{project.team}</span>
+          <span className="text-text-secondary text-sm truncate">{project.team}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTrackColor(project.track)}`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTrackColor(project.track)}`}>
             {project.track}
           </span>
           <span className="text-text-muted text-xs">{project.members} members</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-white/5">
+      <div className="flex items-center justify-between pt-3 border-t border-white/5">
         <span className="text-xs text-text-muted">Updated {project.updated}</span>
         {project.score && (
           <div className="flex items-center gap-1.5">
@@ -200,146 +206,210 @@ const Projects = () => {
     );
   }
 
+  // Show detailed view if a project is selected
+  if (selectedProject) {
   return (
     <div className="min-h-screen pt-0">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-white">Projects</h1>
-            <p className="text-text-muted">Build and showcase your hackathon projects</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="btn-primary h-11 px-6" title="Create Project">
-              <i className="uil uil-plus mr-2"></i>
-              Create Project
-            </button>
-            <button className="btn-secondary h-11 w-11 flex items-center justify-center" title="Import">
-              <i className="uil uil-upload-alt"></i>
-            </button>
-          </div>
-        </div>
-
-      {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        <div className="flex-1">
-          <FilterToolbar
-            searchPlaceholder="Search projects..."
-            searchValue={filters.search}
-            onSearchChange={(value) => handleFilterChange('search', value)}
-            filters={toolbarFilters}
-            onReset={handleReset}
-            onApply={handleApply}
-            hasChanges={hasChanges}
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
+          <ProjectDetailView
+            project={selectedProject}
+            onBack={() => setSelectedProject(null)}
           />
         </div>
-        
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
-              viewMode === 'grid' ? 'bg-cyan text-black shadow-lg' : 'bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <i className="uil uil-apps text-sm"></i>
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 ${
-              viewMode === 'table' ? 'bg-cyan text-black shadow-lg' : 'bg-white/5 text-text-secondary hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            <i className="uil uil-list-ul text-sm"></i>
-          </button>
-        </div>
       </div>
+    );
+  }
 
-      {/* Bulk Actions (Table View) */}
-      {viewMode === 'table' && selectedItems.length > 0 && (
-        <div className="flex items-center gap-4 p-4 bg-cyan/10 border border-cyan/30 rounded-2xl">
-          <span className="text-cyan font-medium">{selectedItems.length} selected</span>
-          <div className="flex gap-2">
-            <button className="btn-primary h-10 px-4 text-sm">Open</button>
-            <button className="btn-secondary h-10 px-4 text-sm">Submit</button>
-            <button className="btn-secondary h-10 px-4 text-sm">Archive</button>
-          </div>
-        </div>
-      )}
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary">
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
-      {/* Content */}
-      {filteredProjects.length === 0 ? (
-        <div className="glass-card rounded-xl border p-16 text-center">
-          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i className="uil uil-rocket text-3xl text-text-muted"></i>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">Projects</h1>
+            <p className="text-text-muted text-sm">Build and showcase your hackathon projects</p>
           </div>
-          <h3 className="text-xl font-semibold text-white mb-3">No projects found</h3>
-          <p className="text-text-secondary mb-8 max-w-md mx-auto">
-            {filters.search ? `No projects match "${filters.search}"` : 'Start building something amazing and showcase your work!'}
-          </p>
-          <button className="btn-primary px-8 py-3">
-            <i className="uil uil-plus mr-2"></i>
-            Create Your First Project
+          <button
+            onClick={() => navigate('/projects/create')}
+            className="px-5 py-2.5 bg-cyan hover:bg-cyan/80 text-black font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan/25 hover:scale-105 flex items-center gap-2"
+          >
+            <i className="uil uil-plus text-sm"></i>
+            Create Project
           </button>
         </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map(project => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      ) : (
-        <div className="glass-card rounded-2xl border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-bg-card border-b border-white/10">
-                <tr className="h-12">
-                  <th className="text-left px-5 py-3 w-12">
-                    <input type="checkbox" className="rounded" />
-                  </th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[320px]">Project</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[180px]">Team</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[120px]">Track</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[120px]">Status</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[120px]">Score</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[160px]">Updated</th>
-                  <th className="text-left px-5 py-3 font-semibold text-text-secondary min-w-[140px]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProjects.map(project => (
-                  <tr key={project.id} className="border-b border-white/5 hover:bg-white/5 transition-colors h-14">
-                    <td className="px-5 py-3">
-                      <input type="checkbox" className="rounded" />
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="font-medium text-white">{project.title}</div>
-                    </td>
-                    <td className="px-5 py-3 text-text-secondary">{project.team}</td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getTrackColor(project.track)}`}>
-                        {project.track}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(project.status)}`}>
-                        {project.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-white">{project.score || '—'}</td>
-                    <td className="px-5 py-3 text-text-muted text-sm">{project.updated}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <button className="text-cyan hover:text-white text-sm">Open</button>
-                        <button className="text-text-muted hover:text-white text-sm">Menu</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+        {/* Compact Filter Bar */}
+        <div className="glass-card rounded-xl border border-white/10 p-4 shadow-lg">
+          <div className="flex flex-wrap items-center gap-3">
+
+            {/* Search */}
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <i className="uil uil-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted text-sm"></i>
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && navigate(`/projects?query=${filters.search}`)}
+                  className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:border-cyan/50 focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Track Filter */}
+            <select
+              value={filters.track}
+              onChange={(e) => handleFilterChange('track', e.target.value)}
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-full text-white text-sm focus:border-cyan/50 focus:outline-none transition-colors"
+            >
+              <option value="all">All Tracks</option>
+              <option value="AI/ML">AI/ML</option>
+              <option value="Web3">Web3</option>
+              <option value="Gaming">Gaming</option>
+              <option value="Open Innovation">Open Innovation</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-full text-white text-sm focus:border-cyan/50 focus:outline-none transition-colors"
+            >
+              <option value="all">All Status</option>
+              <option value="submitted">Submitted</option>
+              <option value="in-progress">In Progress</option>
+              <option value="draft">Draft</option>
+            </select>
+
+            {/* Sort */}
+            <select
+              value={filters.sort}
+              onChange={(e) => handleFilterChange('sort', e.target.value)}
+              className="px-3 py-2 bg-white/5 border border-white/10 rounded-full text-white text-sm focus:border-cyan/50 focus:outline-none transition-colors"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="score">Score</option>
+            </select>
+
+            {/* Reset */}
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-text-secondary hover:text-white text-sm transition-all duration-200"
+            >
+              Reset
+            </button>
+
+            {/* Apply */}
+            <button
+              onClick={handleApply}
+              disabled={!hasChanges}
+              className="px-4 py-2 bg-cyan hover:bg-cyan/80 disabled:bg-white/5 disabled:text-text-muted text-black font-medium rounded-full text-sm transition-all duration-200 disabled:cursor-not-allowed"
+            >
+              Apply
+            </button>
+
+            {/* View Toggle */}
+            <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-full transition-all duration-300 ${
+                  viewMode === 'grid'
+                    ? 'bg-cyan text-black shadow-md'
+                    : 'text-text-secondary hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <i className="uil uil-apps text-sm"></i>
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-full transition-all duration-300 ${
+                  viewMode === 'list'
+                    ? 'bg-cyan text-black shadow-md'
+                    : 'text-text-secondary hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <i className="uil uil-list-ul text-sm"></i>
+              </button>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Content */}
+        {filteredProjects.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
+                <i className="uil uil-rocket text-2xl text-text-muted"></i>
+              </div>
+              <h3 className="text-xl font-semibold text-white">No projects found</h3>
+              <p className="text-text-secondary max-w-sm">
+                {filters.search ? `No projects match "${filters.search}"` : 'Start building something amazing and showcase your work!'}
+              </p>
+              <button
+                onClick={() => navigate('/projects/create')}
+                className="px-6 py-3 bg-cyan hover:bg-cyan/80 text-black font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan/25 hover:scale-105 animate-pulse"
+              >
+                Create Your First Project
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={`transition-all duration-500 ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredProjects.map(project => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
+            ) : (
+              <div className="glass-card rounded-xl border border-white/10 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-white/5 border-b border-white/10">
+                      <tr className="h-12">
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Project</th>
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Team</th>
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Track</th>
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Status</th>
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Score</th>
+                        <th className="text-left px-5 py-3 font-semibold text-text-secondary text-sm">Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProjects.map(project => (
+                        <tr
+                          key={project.id}
+                          className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                          onClick={() => setSelectedProject(project)}
+                        >
+                          <td className="px-5 py-4">
+                            <div className="font-medium text-white text-sm">{project.title}</div>
+                          </td>
+                          <td className="px-5 py-4 text-text-secondary text-sm">{project.team}</td>
+                          <td className="px-5 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTrackColor(project.track)}`}>
+                              {project.track}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-white text-sm">{project.score || '—'}</td>
+                          <td className="px-5 py-4 text-text-muted text-sm">{project.updated}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

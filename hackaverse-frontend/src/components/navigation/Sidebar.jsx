@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Tooltip from '../ui/Tooltip';
 
 const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -80,6 +82,24 @@ const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
           ))}
         </div>
       </nav>
+
+      {/* Logout Button at Bottom */}
+      <div className="p-3 border-t border-white/5">
+        <button
+          onClick={logout}
+          className={`group flex items-center h-11 rounded-xl transition-all w-full ${
+            isCollapsed ? 'justify-center' : 'gap-3 px-3'
+          } text-white/80 hover:text-white hover:bg-red-500/20`}
+          aria-label="Logout"
+        >
+          <div className="relative flex items-center justify-center">
+            <i className="uil uil-sign-out-alt text-xl min-w-[20px]"></i>
+          </div>
+          {!isCollapsed && (
+            <span className="flex-1">Logout</span>
+          )}
+        </button>
+      </div>
     </aside>
   );
 };

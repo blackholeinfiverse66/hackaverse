@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminSubmissions = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -181,9 +182,14 @@ const AdminSubmissions = () => {
     <div className="min-h-screen pt-0">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8 space-y-8">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-white">Submissions</h1>
-          <p className="text-text-muted">Manage and review project submissions</p>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-white">Submissions</h1>
+            <p className="text-text-muted">Manage and review project submissions</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Logout button removed - use sidebar logout only */}
+          </div>
         </div>
 
       {/* Tabs */}

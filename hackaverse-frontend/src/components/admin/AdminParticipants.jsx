@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import InviteParticipantModal from './InviteParticipantModal';
 
 const AdminParticipants = () => {
+  const { logout } = useAuth();
   const [filters, setFilters] = useState({
     search: '',
     track: 'all',
@@ -10,6 +13,7 @@ const AdminParticipants = () => {
   });
   const [selectedItems] = useState([]);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const [participants] = useState([
     {
@@ -52,7 +56,7 @@ const AdminParticipants = () => {
   const statuses = ['all', 'active', 'inactive'];
 
   const filteredParticipants = participants.filter(participant => {
-    if (filters.search && !participant.name.toLowerCase().includes(filters.search.toLowerCase()) && 
+    if (filters.search && !participant.name.toLowerCase().includes(filters.search.toLowerCase()) &&
         !participant.email.toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.role !== 'all' && participant.role !== filters.role) return false;
     if (filters.status !== 'all' && participant.status !== filters.status) return false;
@@ -93,7 +97,7 @@ const AdminParticipants = () => {
             <i className="uil uil-times text-xl"></i>
           </button>
         </div>
-        
+
         <div className="p-5 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -142,17 +146,23 @@ const AdminParticipants = () => {
 
   return (
     <div className="min-h-screen pt-0 ">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-white">Participants</h1>
             <p className="text-text-muted">Manage hackathon participants and roles</p>
           </div>
-          <button className="btn-primary h-11 px-6" title="Invite Participant">
-            <i className="uil uil-user-plus mr-2"></i>
-            Invite
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="btn-primary h-11 px-6"
+              title="Invite Participant"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
+              <i className="uil uil-user-plus mr-2"></i>
+              Invite
+            </button>
+          </div>
         </div>
 
       {/* Filters */}
@@ -264,7 +274,7 @@ const AdminParticipants = () => {
                   <td className="px-5 py-3 text-text-muted text-sm">{participant.joined}</td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <button 
+                      <button
                         onClick={() => setSelectedParticipant(participant)}
                         className="text-cyan hover:text-white text-sm"
                       >
@@ -303,11 +313,20 @@ const AdminParticipants = () => {
       </div>
 
       {selectedParticipant && (
-        <ParticipantDetailPanel 
-          participant={selectedParticipant} 
-          onClose={() => setSelectedParticipant(null)} 
+        <ParticipantDetailPanel
+          participant={selectedParticipant}
+          onClose={() => setSelectedParticipant(null)}
         />
       )}
+
+      <InviteParticipantModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSend={(data) => {
+          console.log('Sending invitation:', data);
+          // TODO: Implement API call to send invitation
+        }}
+      />
       </div>
     </div>
   );

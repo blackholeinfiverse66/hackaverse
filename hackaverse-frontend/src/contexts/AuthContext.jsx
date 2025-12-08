@@ -137,6 +137,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(USER_DATA_KEY);
     setUser(null);
     setIsAuthenticated(false);
+    // Navigate to home page after logout
+    window.location.href = '/';
   };
 
   const value = {

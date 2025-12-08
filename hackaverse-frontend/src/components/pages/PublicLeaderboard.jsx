@@ -22,7 +22,7 @@ const PublicLeaderboard = () => {
   const filters = ['Global', 'AI/ML', 'Web3', 'Gaming', 'Open Innovation'];
 
   return (
-    <div className="min-h-screen bg-charcoal text-white">
+    <div className="min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #0D1128 0%, #15193B 100%)' }}>
       {/* Header */}
       <nav className="border-b border-white/10 bg-charcoal/90 backdrop-blur-sm">
           <div className="max-w-[1400px] mx-auto px-6 lg:px-8">

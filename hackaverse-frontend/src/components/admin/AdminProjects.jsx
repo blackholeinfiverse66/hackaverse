@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminProjects = () => {
+  const { logout } = useAuth();
   const [viewMode, setViewMode] = useState('grid');
   const [filters, setFilters] = useState({
     search: '',
@@ -122,23 +124,23 @@ const AdminProjects = () => {
             <p className="text-text-muted">Manage and track hackathon projects</p>
           </div>
           <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-colors ${
-              viewMode === 'grid' ? 'bg-cyan text-charcoal' : 'bg-white/10 text-text-secondary hover:text-white'
-            }`}
-          >
-            <i className="uil uil-apps"></i>
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={`h-11 w-11 flex items-center justify-center rounded-xl transition-colors ${
-              viewMode === 'table' ? 'bg-cyan text-charcoal' : 'bg-white/10 text-text-secondary hover:text-white'
-            }`}
-          >
-            <i className="uil uil-list-ul"></i>
-          </button>
-        </div>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`h-11 w-11 flex items-center justify-center rounded-xl transition-colors ${
+                viewMode === 'grid' ? 'bg-cyan text-charcoal' : 'bg-white/10 text-text-secondary hover:text-white'
+              }`}
+            >
+              <i className="uil uil-apps"></i>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`h-11 w-11 flex items-center justify-center rounded-xl transition-colors ${
+                viewMode === 'table' ? 'bg-cyan text-charcoal' : 'bg-white/10 text-text-secondary hover:text-white'
+              }`}
+            >
+              <i className="uil uil-list-ul"></i>
+            </button>
+          </div>
       </div>
 
       {/* Filters */}

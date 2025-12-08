@@ -1,17 +1,25 @@
-# UI Fixes TODO List
+# Profile Settings Redesign TODO
 
-## Layout and Spacing Improvements
-- [x] Update AuthenticatedLayout.jsx to dynamically adjust main content margin based on sidebar collapse state
-- [x] Adjust Sidebar.jsx z-index and positioning to prevent overlap with topbar
-- [x] Enhance starfield.js with more dynamic cosmic effects and ensure it's loaded on all pages
-- [x] Improve JudgeHome.jsx layout by removing text truncation and optimizing grid spacing
-- [x] Improve AdminHome.jsx layout similarly to JudgeHome.jsx
-- [x] Enhance MainPage.jsx responsive spacing and section padding
-- [x] Refine ProfilePage.jsx form section spacing and organization
-- [x] Ensure all text displays completely without truncation across components
+## Current Status: In Progress
 
-## Testing and Verification
-- [x] Test responsive behavior across different screen sizes
-- [x] Verify sidebar collapse/expand functionality
-- [x] Ensure cosmic background loads on all pages
-- [x] Check text display completeness without truncation
+### CSS Updates
+- [ ] Add floating label styles with animations
+- [ ] Create toggle switch components with smooth animations
+- [ ] Enhance micro-interactions (hover glows, ripples, section animations)
+- [ ] Add neon-outlined button styles with pulse effects
+
+### Component Updates
+- [ ] Redesign header with strong title, subtitle, right-aligned Edit Profile button with glow effects
+- [ ] Convert Basic Information to glassmorphic inputs with floating labels and focus animations
+- [ ] Enhance user identity card with glowing avatar and status badges
+- [ ] Transform Skills section to pill-based tags with hover animations
+- [ ] Update Social Links with minimal inputs and validation feedback
+- [ ] Add toggle switches to Preferences with smooth animations
+- [ ] Create neon-outlined Security buttons with pulse effects
+- [ ] Implement navigation behaviors for edit mode, save/cancel, avatar modal, skills modal, and routing
+
+### Testing & Validation
+- [ ] Test all micro-interactions and animations
+- [ ] Validate form functionality and validation
+- [ ] Ensure responsive design works across devices
+- [ ] Performance optimization for animations

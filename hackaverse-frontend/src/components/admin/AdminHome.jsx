@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import AnnouncementModal from './AnnouncementModal';
 
 const AdminHome = () => {
+  const { logout } = useAuth();
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
 
   const [kpis] = useState({

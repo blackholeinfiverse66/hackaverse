@@ -49,12 +49,15 @@ const AccountMenu = ({ isOpen, onClose, triggerRef }) => {
       case 'profile':
         navigate('/app/profile');
         break;
+      case 'edit-profile':
+        navigate('/app/profile/edit');
+        break;
       case 'settings':
         navigate('/app/settings');
         break;
       case 'logout':
+        // Use centralized logout from AuthContext
         logout();
-        navigate('/');
         break;
     }
   };
@@ -117,6 +120,17 @@ const AccountMenu = ({ isOpen, onClose, triggerRef }) => {
         >
           <i className="uil uil-user account-menu-item-icon"></i>
           <span className="account-menu-item-text">Profile</span>
+        </div>
+
+        <div
+          className="account-menu-item"
+          role="menuitem"
+          tabIndex={0}
+          onClick={() => handleMenuItemClick('edit-profile')}
+          onKeyDown={(e) => e.key === 'Enter' && handleMenuItemClick('edit-profile')}
+        >
+          <i className="uil uil-edit account-menu-item-icon"></i>
+          <span className="account-menu-item-text">Edit Profile</span>
         </div>
 
         <div

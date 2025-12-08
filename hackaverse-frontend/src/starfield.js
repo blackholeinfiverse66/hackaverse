@@ -6,35 +6,52 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function init() {
-    canvas = document.createElement('canvas');
-    canvas.id = 'starfield-canvas';
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100vw';
-    canvas.style.height = '100vh';
-    canvas.style.zIndex = '-999999';  // Ensure it's at the very back
-    canvas.style.pointerEvents = 'none';
-    canvas.style.background = '#000000';
+    // Wait for DOM to be ready and React root to exist
+    const checkReady = () => {
+      const rootElement = document.getElementById('root');
+      console.log('Starfield: Checking if ready...', { rootElement: !!rootElement, body: !!document.body });
 
-    // Insert as first child to ensure it's at the back
-    if (document.body.firstChild) {
-      document.body.insertBefore(canvas, document.body.firstChild);
-    } else {
-      document.body.appendChild(canvas);
-    }
+      if (rootElement && document.body) {
+        console.log('Starfield: Initializing...');
 
-    ctx = canvas.getContext('2d');
+        canvas = document.createElement('canvas');
+        canvas.id = 'starfield-canvas';
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.zIndex = '-999999';  // Ensure it's at the very back
+        canvas.style.pointerEvents = 'none';
+        canvas.style.background = '#000000';
 
-    resize();
+        // Insert as first child to ensure it's at the back
+        if (document.body.firstChild) {
+          document.body.insertBefore(canvas, document.body.firstChild);
+        } else {
+          document.body.appendChild(canvas);
+        }
 
-    if (reducedMotion) {
-      drawStatic();
-    } else {
-      animate();
-    }
+        ctx = canvas.getContext('2d');
 
-    window.addEventListener('resize', resize);
+        resize();
+
+        if (reducedMotion) {
+          drawStatic();
+        } else {
+          animate();
+        }
+
+        window.addEventListener('resize', resize);
+
+        console.log('Starfield: Initialized successfully');
+      } else {
+        // Retry after a short delay
+        setTimeout(checkReady, 100);
+      }
+    };
+
+    checkReady();
   }
 
   function resize() {

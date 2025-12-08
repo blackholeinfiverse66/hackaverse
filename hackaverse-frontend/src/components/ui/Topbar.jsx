@@ -118,7 +118,11 @@ const Topbar = ({ onSearchOpen, onAccountMenuOpen }) => {
   };
 
   return (
-    <header className="topbar">
+    <header className="topbar" style={{
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      background: 'rgba(13, 20, 59, 0.8)'
+    }}>
       <div className="topbar-content">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">

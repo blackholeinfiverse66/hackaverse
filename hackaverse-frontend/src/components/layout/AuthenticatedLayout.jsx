@@ -15,6 +15,7 @@ const AuthenticatedLayout = ({ children }) => {
     { icon: 'uil-rocket', label: 'Projects', path: '/admin/projects' },
     { icon: 'uil-users-alt', label: 'Participants', path: '/admin/participants' },
     { icon: 'uil-file-check-alt', label: 'Submissions', path: '/admin/submissions' },
+    { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
     { icon: 'uil-cog', label: 'Settings', path: '/admin/settings' }
   ];
 
@@ -23,6 +24,7 @@ const AuthenticatedLayout = ({ children }) => {
     { icon: 'uil-rocket', label: 'Projects', path: '/app/projects' },
     { icon: 'uil-users-alt', label: 'Teams', path: '/app/teams' },
     { icon: 'uil-file-upload-alt', label: 'Submissions', path: '/app/submissions' },
+    { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
     { icon: 'uil-user-circle', label: 'Profile', path: '/app/profile' }
   ];
 
@@ -30,6 +32,7 @@ const AuthenticatedLayout = ({ children }) => {
     { icon: 'uil-dashboard', label: 'Dashboard', path: '/judge' },
     { icon: 'uil-list-ul', label: 'Queue', path: '/judge/queue' },
     { icon: 'uil-chart-line', label: 'My Scores', path: '/judge/scores' },
+    { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
     { icon: 'uil-file-alt', label: 'Logs', path: '/logs' }
   ];
 
@@ -44,7 +47,7 @@ const AuthenticatedLayout = ({ children }) => {
   const sidebarItems = getSidebarItems();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0D1128 0%, #15193B 100%)' }}>
       <Topbar />
       <div className="flex">
         <Sidebar

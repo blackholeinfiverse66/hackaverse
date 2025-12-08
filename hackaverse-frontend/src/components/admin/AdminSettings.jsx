@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminSettings = () => {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [hasChanges, setHasChanges] = useState(false);
   const [showToast, setShowToast] = useState(false);

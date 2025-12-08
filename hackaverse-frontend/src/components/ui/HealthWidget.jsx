@@ -1,35 +1,51 @@
 import { useState, useEffect } from 'react';
+import api from '../../services/api';
 
 const HealthWidget = () => {
-  const [health, setHealth] = useState('Stable');
+  const [health, setHealth] = useState('Unknown');
   const [isVisible, setIsVisible] = useState(true);
 
   const healthStates = {
-    'Stable': { color: 'success', icon: 'uil-check-circle' },
-    'Improving': { color: 'cyan', icon: 'uil-arrow-up-right' },
-    'Rising': { color: 'warning', icon: 'uil-exclamation-triangle' }
+    'Healthy': { color: 'success', icon: 'uil-heart' },
+    'Warning': { color: 'warning', icon: 'uil-exclamation-triangle' },
+    'Critical': { color: 'error', icon: 'uil-exclamation-octagon' },
+    'Unknown': { color: 'text-muted', icon: 'uil-question-circle' }
   };
 
   const colorClassMap = {
     success: 'text-success',
     cyan: 'text-cyan',
-    warning: 'text-warning'
+    warning: 'text-warning',
+    error: 'text-red-400',
+    'text-muted': 'text-text-muted'
   };
 
   useEffect(() => {
-    // Simulate health status changes
-    const interval = setInterval(() => {
-      const states = ['Stable', 'Improving', 'Rising'];
-      const randomState = states[Math.floor(Math.random() * states.length)];
-      setHealth(randomState);
-    }, 30000); // Change every 30 seconds
+    const fetchHealth = async () => {
+      try {
+        const response = await api.get('/system/health');
+        const healthStatus = response.data.status;
+        // Capitalize first letter to match our healthStates keys
+        const formattedStatus = healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1);
+        setHealth(formattedStatus);
+      } catch (error) {
+        console.error('Failed to fetch health status:', error);
+        setHealth('Unknown');
+      }
+    };
+
+    // Fetch health status immediately
+    fetchHealth();
+
+    // Set up interval to fetch health status every 30 seconds
+    const interval = setInterval(fetchHealth, 30000);
 
     return () => clearInterval(interval);
   }, []);
 
   if (!isVisible) return null;
 
-  const currentHealth = healthStates[health];
+  const currentHealth = healthStates[health] || healthStates['Unknown'];
   const currentClass = colorClassMap[currentHealth.color] || 'text-text-muted';
 
   return (
@@ -40,7 +56,7 @@ const HealthWidget = () => {
           <div className="text-xs text-text-muted">Health</div>
           <div className={`text-sm font-medium ${currentClass}`}>{health}</div>
         </div>
-        <button 
+        <button
           onClick={() => setIsVisible(false)}
           className="text-text-muted hover:text-text-primary transition-colors ml-2"
         >
