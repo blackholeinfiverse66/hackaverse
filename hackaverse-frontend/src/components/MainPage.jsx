@@ -164,9 +164,9 @@ const MainPage = () => {
                       <span className="text-purple-400">$</span>
                       <span className="text-text-secondary">hacka init --project="Smart Campus"</span>
                     </div>
-                    <div className="text-success">✓ Project initialized successfully</div>
-                    <div className="text-success">✓ AI mentor assigned: Dr. Sarah Chen</div>
-                    <div className="text-success">✓ Team matching: 3 developers found</div>
+                    <div className="text-success">[OK] Project initialized successfully</div>
+                    <div className="text-success">[OK] AI mentor assigned: Dr. Sarah Chen</div>
+                    <div className="text-success">[OK] Team matching: 3 developers found</div>
                     <div className="flex items-start gap-2">
                       <span className="text-teal-400">AI:</span>
                       <span className="text-text-primary">Ready to build something amazing? 

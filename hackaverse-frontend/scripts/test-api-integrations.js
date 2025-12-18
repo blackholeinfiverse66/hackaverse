@@ -10,8 +10,8 @@ import axios from 'axios';
 // Use the base URL from environment or default
 const BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8001';
 
-console.log('🚀 Starting API Integration Tests...');
-console.log(`🔗 Testing against: ${BASE_URL}`);
+console.log('[START] Starting API Integration Tests...');
+console.log(`[URL] Testing against: ${BASE_URL}`);
 
 // Test configuration
 const testConfig = {
@@ -75,29 +75,29 @@ const testData = {
  * Test /register endpoint
  */
 async function testRegisterEndpoint() {
-  console.log('\n📝 Testing /register endpoint...');
+  console.log('\n[REGISTER] Testing /register endpoint...');
 
   try {
     // Test invalid data (should fail validation)
     console.log('  Testing invalid registration data...');
     try {
       await axios.post(`${BASE_URL}/register`, testData.register.invalid, testConfig);
-      console.log('  ❌ Invalid data test failed - should have thrown error');
+      console.log('  [FAIL] Invalid data test failed - should have thrown error');
     } catch (error) {
       if (error.response) {
-        console.log(`  ✅ Invalid data correctly rejected: ${error.response.data.message || error.message}`);
+        console.log(`  [PASS] Invalid data correctly rejected: ${error.response.data.message || error.message}`);
       } else {
-        console.log(`  ✅ Invalid data correctly rejected: ${error.message}`);
+        console.log(`  [PASS] Invalid data correctly rejected: ${error.message}`);
       }
     }
 
     // Test valid data
     console.log('  Testing valid registration data...');
     const response = await axios.post(`${BASE_URL}/register`, testData.register.valid, testConfig);
-    console.log(`  ✅ Valid registration successful: ${response.status} ${response.statusText}`);
+    console.log(`  [PASS] Valid registration successful: ${response.status} ${response.statusText}`);
 
   } catch (error) {
-    console.log(`  ❌ Register endpoint test failed: ${error.message}`);
+    console.log(`  [FAIL] Register endpoint test failed: ${error.message}`);
   }
 }
 
@@ -105,30 +105,30 @@ async function testRegisterEndpoint() {
  * Test /agent endpoint
  */
 async function testAgentEndpoint() {
-  console.log('\n🤖 Testing /agent endpoint...');
+  console.log('\n[AGENT] Testing /agent endpoint...');
 
   try {
     // Test invalid data (should fail validation)
     console.log('  Testing invalid agent message...');
     try {
       await axios.post(`${BASE_URL}/agent`, testData.agent.invalid, testConfig);
-      console.log('  ❌ Invalid agent data test failed - should have thrown error');
+      console.log('  [FAIL] Invalid agent data test failed - should have thrown error');
     } catch (error) {
       if (error.response) {
-        console.log(`  ✅ Invalid agent data correctly rejected: ${error.response.data.message || error.message}`);
+        console.log(`  [PASS] Invalid agent data correctly rejected: ${error.response.data.message || error.message}`);
       } else {
-        console.log(`  ✅ Invalid agent data correctly rejected: ${error.message}`);
+        console.log(`  [PASS] Invalid agent data correctly rejected: ${error.message}`);
       }
     }
 
     // Test valid data
     console.log('  Testing valid agent message...');
     const response = await axios.post(`${BASE_URL}/agent`, testData.agent.valid, testConfig);
-    console.log(`  ✅ Valid agent message successful: ${response.status} ${response.statusText}`);
+    console.log(`  [PASS] Valid agent message successful: ${response.status} ${response.statusText}`);
     console.log(`     Response: ${response.data.response.substring(0, 50)}...`);
 
   } catch (error) {
-    console.log(`  ❌ Agent endpoint test failed: ${error.message}`);
+    console.log(`  [FAIL] Agent endpoint test failed: ${error.message}`);
   }
 }
 
@@ -136,30 +136,30 @@ async function testAgentEndpoint() {
  * Test /reward endpoint
  */
 async function testRewardEndpoint() {
-  console.log('\n🏆 Testing /reward endpoint...');
+  console.log('\n[REWARD] Testing /reward endpoint...');
 
   try {
     // Test invalid data (should fail validation)
     console.log('  Testing invalid reward data...');
     try {
       await axios.post(`${BASE_URL}/reward`, testData.reward.invalid, testConfig);
-      console.log('  ❌ Invalid reward data test failed - should have thrown error');
+      console.log('  [FAIL] Invalid reward data test failed - should have thrown error');
     } catch (error) {
       if (error.response) {
-        console.log(`  ✅ Invalid reward data correctly rejected: ${error.response.data.message || error.message}`);
+        console.log(`  [PASS] Invalid reward data correctly rejected: ${error.response.data.message || error.message}`);
       } else {
-        console.log(`  ✅ Invalid reward data correctly rejected: ${error.message}`);
+        console.log(`  [PASS] Invalid reward data correctly rejected: ${error.message}`);
       }
     }
 
     // Test valid data
     console.log('  Testing valid reward data...');
     const response = await axios.post(`${BASE_URL}/reward`, testData.reward.valid, testConfig);
-    console.log(`  ✅ Valid reward successful: ${response.status} ${response.statusText}`);
+    console.log(`  [PASS] Valid reward successful: ${response.status} ${response.statusText}`);
     console.log(`     Reward ID: ${response.data.reward_id}, Total Points: ${response.data.total_points}`);
 
   } catch (error) {
-    console.log(`  ❌ Reward endpoint test failed: ${error.message}`);
+    console.log(`  [FAIL] Reward endpoint test failed: ${error.message}`);
   }
 }
 
@@ -167,7 +167,7 @@ async function testRewardEndpoint() {
  * Test /logs endpoint
  */
 async function testLogsEndpoint() {
-  console.log('\n📋 Testing /logs endpoint...');
+  console.log('\n[LOGS] Testing /logs endpoint...');
 
   try {
     // Test invalid params
@@ -177,12 +177,12 @@ async function testLogsEndpoint() {
         params: testData.logs.invalidParams,
         ...testConfig
       });
-      console.log('  ❌ Invalid log params test failed - should have thrown error');
+      console.log('  [FAIL] Invalid log params test failed - should have thrown error');
     } catch (error) {
       if (error.response) {
-        console.log(`  ✅ Invalid log params correctly rejected: ${error.response.data.message || error.message}`);
+        console.log(`  [PASS] Invalid log params correctly rejected: ${error.response.data.message || error.message}`);
       } else {
-        console.log(`  ✅ Invalid log params correctly rejected: ${error.message}`);
+        console.log(`  [PASS] Invalid log params correctly rejected: ${error.message}`);
       }
     }
 
@@ -192,11 +192,11 @@ async function testLogsEndpoint() {
       params: testData.logs.validParams,
       ...testConfig
     });
-    console.log(`  ✅ Valid log request successful: ${response.status} ${response.statusText}`);
+    console.log(`  [PASS] Valid log request successful: ${response.status} ${response.statusText}`);
     console.log(`     Retrieved ${response.data.logs.length} log entries`);
 
   } catch (error) {
-    console.log(`  ❌ Logs endpoint test failed: ${error.message}`);
+    console.log(`  [FAIL] Logs endpoint test failed: ${error.message}`);
   }
 }
 
@@ -205,20 +205,20 @@ async function testLogsEndpoint() {
  */
 async function runAllTests() {
   try {
-    console.log('🧪 Running comprehensive API integration tests...');
+    console.log('[TEST] Running comprehensive API integration tests...');
 
     await testRegisterEndpoint();
     await testAgentEndpoint();
     await testRewardEndpoint();
     await testLogsEndpoint();
 
-    console.log('\n🎉 All API integration tests completed!');
-    console.log('✅ Endpoints tested: /register, /agent, /reward, /logs');
-    console.log('✅ Validation and error handling verified');
-    console.log('✅ Network calls with proper error handling confirmed');
+    console.log('\n[SUCCESS] All API integration tests completed!');
+    console.log('[PASS] Endpoints tested: /register, /agent, /reward, /logs');
+    console.log('[PASS] Validation and error handling verified');
+    console.log('[PASS] Network calls with proper error handling confirmed');
 
   } catch (error) {
-    console.log(`\n❌ Test suite failed: ${error.message}`);
+    console.log(`\n[FAIL] Test suite failed: ${error.message}`);
     process.exit(1);
   }
 }

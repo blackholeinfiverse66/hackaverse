@@ -11,7 +11,7 @@ submission_service = SubmissionService()
 @router.get("/", response_model=list[SubmissionSchema])
 async def get_submissions(db: Session = Depends(get_db)):
     """Get all submissions."""
-    return submission_service.get_all_submissions(db)
+    return submission_service.get_submissions(db)
 
 @router.get("/{submission_id}", response_model=SubmissionSchema)
 async def get_submission(submission_id: int, db: Session = Depends(get_db)):

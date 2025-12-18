@@ -95,7 +95,7 @@ const sections = [
   }
 ];
 
-console.log('🧪 Testing Responsive Design for MainPage.jsx\n');
+console.log('[TEST] Testing Responsive Design for MainPage.jsx\n');
 
 // Test each section
 let passedTests = 0;
@@ -108,13 +108,13 @@ sections.forEach(section => {
   const hasResponsiveClasses = mainPageContent.includes(section.selector);
 
   if (hasResponsiveClasses) {
-    console.log(`  ✅ Found responsive classes: ${section.selector}`);
+    console.log(`  [PASS] Found responsive classes: ${section.selector}`);
     console.log(`     Mobile: ${section.expected.mobile}`);
     console.log(`     Tablet: ${section.expected.tablet}`);
     console.log(`     Desktop: ${section.expected.desktop}`);
     passedTests++;
   } else {
-    console.log(`  ❌ Missing responsive classes: ${section.selector}`);
+    console.log(`  [FAIL] Missing responsive classes: ${section.selector}`);
   }
 
   console.log('');
@@ -128,9 +128,9 @@ const hasMobileClasses = mainPageContent.includes('py-12') || mainPageContent.in
 const hasTabletClasses = mainPageContent.includes('sm:py-16') || mainPageContent.includes('sm:py-20');
 const hasDesktopClasses = mainPageContent.includes('lg:py-20') || mainPageContent.includes('lg:py-24');
 
-console.log(`  Mobile breakpoints (py-*): ${hasMobileClasses ? '✅' : '❌'}`);
-console.log(`  Tablet breakpoints (sm:py-*): ${hasTabletClasses ? '✅' : '❌'}`);
-console.log(`  Desktop breakpoints (lg:py-*): ${hasDesktopClasses ? '✅' : '❌'}`);
+console.log(`  Mobile breakpoints (py-*): ${hasMobileClasses ? '[PASS]' : '[FAIL]'}`);
+console.log(`  Tablet breakpoints (sm:py-*): ${hasTabletClasses ? '[PASS]' : '[FAIL]'}`);
+console.log(`  Desktop breakpoints (lg:py-*): ${hasDesktopClasses ? '[PASS]' : '[FAIL]'}`);
 
 if (hasMobileClasses && hasTabletClasses && hasDesktopClasses) {
   passedTests++;
@@ -141,13 +141,13 @@ const spacingPattern = /py-\d+ sm:py-\d+ lg:py-\d+/g;
 const matches = mainPageContent.match(spacingPattern);
 console.log(`\nFound ${matches ? matches.length : 0} responsive spacing patterns`);
 
-console.log('\n📊 Test Results:');
+console.log('\n[RESULTS] Test Results:');
 console.log(`  Passed: ${passedTests}/${totalTests + 1} tests`);
 console.log(`  Success Rate: ${Math.round((passedTests / (totalTests + 1)) * 100)}%`);
 
 if (passedTests === totalTests + 1) {
-  console.log('\n🎉 All responsive design tests passed!');
-  console.log('\n📋 Manual Testing Checklist:');
+  console.log('\n[SUCCESS] All responsive design tests passed!');
+  console.log('\n[CHECKLIST] Manual Testing Checklist:');
   console.log('  1. Open http://localhost:3004/ in browser');
   console.log('  2. Test mobile view (320px width):');
   console.log('     - Hero section: 80px top, 64px bottom padding');
@@ -163,5 +163,5 @@ if (passedTests === totalTests + 1) {
   console.log('     - Footer: 80px vertical padding');
   console.log('  5. Verify visual hierarchy and readability across all breakpoints');
 } else {
-  console.log('\n⚠️  Some tests failed. Please check the implementation.');
+  console.log('\n[WARNING] Some tests failed. Please check the implementation.');
 }

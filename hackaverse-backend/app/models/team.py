@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -32,6 +32,7 @@ class Team(Base):
     leader = relationship("User")
     members = relationship("User", secondary=team_members, backref="teams")
     projects = relationship("Project", back_populates="team")
+    submissions = relationship("Submission", back_populates="team")
 
     @property
     def member_count(self):
