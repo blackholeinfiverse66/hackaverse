@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Starfield Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .content {
+            position: relative;
+            z-index: 10;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(13, 17, 40, 0.8);
+            border-radius: 20px;
+            margin-top: 100px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #BF40BF, #00F2EA);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #BF40BF, #00F2EA);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Simple Starfield Test</h1>
+        <p>If you can see a starry background behind this content, the simple starfield is working correctly!</p>
+        <p>This version uses a simpler implementation with a z-index of 0 to ensure visibility.</p>
+        <button class="btn" onclick="window.location.href='/'">Back to Main Site</button>
+    </div>
+    
+    <script src="simple-starfield.js"></script>
+</body>
+</html>
