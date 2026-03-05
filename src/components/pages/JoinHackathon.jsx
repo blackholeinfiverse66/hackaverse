@@ -25,16 +25,10 @@ export default function JoinHackathon() {
 
   const joinHackathon = async (hackathonId) => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      await api.post('/hackathons/join', {
-        hackathon_id: hackathonId,
-        user_id: user.id
-      });
-      
-      alert('Successfully joined hackathon! You can now create or join a team.');
-      navigate('/create-team');
+      localStorage.setItem('joining_hackathon_id', hackathonId);
+      navigate(`/create-team/${hackathonId}`);
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to join hackathon');
+      console.error('Join error:', error);
     }
   };
 

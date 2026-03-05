@@ -1,266 +1,105 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../../services/api';
-import { useToast, ToastContainer } from '../../hooks/useToast.jsx';
-import { CardSkeleton } from '../ui/Skeletons';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Teams = () => {
+  const [myTeam, setMyTeam] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [teams, setTeams] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [invitations, setInvitations] = useState([]);
-  const [filters, setFilters] = useState({
-    search: searchParams.get('query') || '',
-    track: 'all',
-    sort: 'name'
-  });
-  const [hasChanges, setHasChanges] = useState(false);
-  const [createForm, setCreateForm] = useState({ hackathon_id: '', team_name: '', project_title: '' });
-  const [hackathons, setHackathons] = useState([]);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [sentInvites, setSentInvites] = useState([]);
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const { toasts, success, error: showError } = useToast();
+  const location = useLocation();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchTeams = async () => {
-      setIsLoading(true);
-      try {
-        const response = await apiService.teams.getAll();
-        setTeams(response.data);
-      } catch (error) {
-        console.error('Failed to fetch teams:', error);
-        setTeams([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    fetchMyTeam();
+  }, [location.pathname]); // Refetch when navigating to this page
 
-    fetchTeams();
-    fetchHackathons();
-    fetchInvitations();
-  }, []);
-
-  const fetchHackathons = async () => {
+  const fetchMyTeam = async () => {
     try {
-      const response = await apiService.hackathons.getActive();
-      setHackathons(response.data.data || []);
-    } catch (error) {
-      console.error('Failed to fetch hackathons:', error);
-    }
-  };
-
-  const fetchInvitations = async () => {
-    try {
-      const [received, sent] = await Promise.all([
-        apiService.teams.getReceivedInvitations(),
-        apiService.teams.getSentInvitations()
-      ]);
-      setInvitations(received.data.data || []);
-      setSentInvites(sent.data.data || []);
-    } catch (error) {
-      console.error('Failed to fetch invitations:', error);
-    }
-  };
-
-  const handleCreateTeam = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
-    if (!createForm.hackathon_id) newErrors.hackathon_id = 'Select a hackathon';
-    if (!createForm.team_name.trim()) newErrors.team_name = 'Team name is required';
-    if (!createForm.project_title.trim()) newErrors.project_title = 'Project title is required';
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
-    try {
-      setSubmitting(true);
-      const user = JSON.parse(localStorage.getItem('user'));
-      await apiService.teams.create({ ...createForm, leader_id: user.id });
-      setShowCreateModal(false);
-      setCreateForm({ hackathon_id: '', team_name: '', project_title: '' });
-      setErrors({});
-      success('Team created successfully!');
-    } catch (error) {
-      showError(error.response?.data?.message || 'Failed to create team');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSendInvite = async (e) => {
-    e.preventDefault();
-    if (!inviteEmail.trim() || !inviteEmail.includes('@')) {
-      showError('Please enter a valid email');
-      return;
-    }
-    try {
-      setSubmitting(true);
-      const teamId = localStorage.getItem('team_id');
-      await apiService.teams.sendInvitation({ team_id: teamId, invitee_email: inviteEmail });
-      setInviteEmail('');
-      fetchInvitations();
-      success('Invitation sent successfully!');
-    } catch (error) {
-      showError(error.response?.data?.message || 'Failed to send invitation');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleRespondInvite = async (invitationId, accept) => {
-    try {
-      setSubmitting(true);
-      await apiService.teams.respondToInvitation({ invitation_id: invitationId, accept });
-      if (accept) {
-        const invitation = invitations.find(i => i.id === invitationId);
-        localStorage.setItem('team_id', invitation.team_id);
-        success('You have joined the team!');
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiService.teams.getAll();
+      console.log('Fetch Teams Response:', response);
+      
+      const data = response.data;
+      
+      if (data.success && data.data && data.data.length > 0) {
+        // Get stored team_id from localStorage
+        const storedTeamId = localStorage.getItem('team_id');
+        
+        // Filter to get only the user's team
+        let userTeam = null;
+        
+        // First try to match by stored team_id
+        if (storedTeamId) {
+          userTeam = data.data.find(team => team.team_id === storedTeamId);
+        }
+        
+        // If not found, try to match by user ID or email
+        if (!userTeam && user) {
+          userTeam = data.data.find(team => 
+            team.leader_id === user?.id || 
+            team.leader_id === user?.user_id ||
+            team.members?.some(member => 
+              member.id === user?.id || 
+              member.id === user?.user_id ||
+              member === user?.email ||
+              member.email === user?.email
+            )
+          );
+        }
+        
+        if (userTeam) {
+          console.log('User team found:', userTeam);
+          setMyTeam(userTeam);
+          // Update localStorage with correct team_id
+          localStorage.setItem('team_id', userTeam.team_id);
+        } else {
+          console.log('No team found for user');
+          setMyTeam(null);
+        }
       } else {
-        success('Invitation declined');
+        console.log('No teams in response');
+        setMyTeam(null);
       }
-      fetchInvitations();
-    } catch (error) {
-      showError(error.response?.data?.message || 'Failed to respond');
+    } catch (err) {
+      console.error('Failed to fetch team:', err);
+      setError(err.message || 'Failed to load team data');
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const filteredTeams = teams.filter(team => {
-    if (filters.search && !team.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
-    if (filters.track !== 'all' && team.track !== filters.track) return false;
-    return true;
-  }).sort((a, b) => {
-    if (filters.sort === 'name') return a.name.localeCompare(b.name);
-    if (filters.sort === 'rank') return a.rank - b.rank;
-    if (filters.sort === 'projects') return b.projects - a.projects;
-    return 0;
-  });
-
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-    setHasChanges(true);
-  };
-
-  const handleSearchSubmit = (e) => {
-    if (e.key === 'Enter') {
-      setSearchParams({ query: filters.search });
-      setIsRefreshing(true);
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
-  };
-
-  const handleReset = () => {
-    setFilters({ search: '', track: 'all', sort: 'name' });
-    setSearchParams({});
-    setHasChanges(false);
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 300);
-  };
-
-  const handleApply = () => {
-    setHasChanges(false);
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 500);
-  };
-
-  const handleViewTeam = (teamId) => {
-    navigate(`/teams/${teamId}`);
-  };
-
-  const getTrackColor = (track) => {
-    switch (track) {
-      case 'AI/ML': return 'text-cyan bg-cyan/20';
-      case 'Web3': return 'text-violet bg-violet/20';
-      case 'Gaming': return 'text-lime bg-lime/20';
-      case 'Open Innovation': return 'text-warning bg-warning/20';
-      default: return 'text-text-muted bg-gunmetal';
-    }
-  };
-
-  const getRankColor = (rank) => {
-    if (rank <= 3) return 'text-warning bg-warning/20';
-    if (rank <= 10) return 'text-success bg-success/20';
-    return 'text-text-muted bg-gunmetal';
-  };
-
-  const TeamCard = ({ team, index }) => (
-    <div
-      className={`glass-card rounded-xl border border-white/10 p-5 hover:border-cyan/40 hover:shadow-lg hover:shadow-cyan/10/20 transition-all duration-300 cursor-pointer group hover:transform hover:scale-[1.02] hover:-translate-y-1 animate-fade-in`}
-      style={{ animationDelay: `${index * 100}ms` }}
-      onClick={() => handleViewTeam(team.id)}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-cyan to-violet rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">{team.name.charAt(5)}</span>
-          </div>
-          <div>
-            <h3 className="font-semibold text-white group-hover:text-cyan transition-colors text-sm leading-tight">
-              {team.name}
-            </h3>
-            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTrackColor(team.track)}`}>
-              {team.track}
-            </span>
-          </div>
-        </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRankColor(team.rank)}`}>
-          #{team.rank}
-        </span>
-      </div>
-
-      <p className="text-text-secondary text-xs mb-3 line-clamp-2 leading-relaxed">{team.tagline}</p>
-
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <i className="uil uil-users-alt text-text-muted text-xs"></i>
-              <span className="text-white">{team.members}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <i className="uil uil-rocket text-text-muted text-xs"></i>
-              <span className="text-white">{team.projects}</span>
-            </div>
-          </div>
-        </div>
-        {team.openRoles && team.openRoles.length > 0 && (
-          <div className="text-xs text-text-muted">
-            Open: {team.openRoles.slice(0, 2).join(', ')}
-            {team.openRoles.length > 2 && ` +${team.openRoles.length - 2} more`}
-          </div>
-        )}
-      </div>
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleViewTeam(team.id);
-        }}
-        className="btn-primary w-full py-2 text-sm relative overflow-hidden group/btn"
-      >
-        <span className="relative z-10">View Team</span>
-        <div className="absolute inset-0 bg-white/20 scale-0 group-hover/btn:scale-100 transition-transform duration-300 rounded"></div>
-      </button>
-    </div>
-  );
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary">
-        <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-          <div className="animate-pulse space-y-3">
-            <div className="h-10 bg-white/10 rounded-lg w-40"></div>
-            <div className="h-5 bg-white/5 rounded w-72"></div>
+      <div className="min-h-screen pt-0">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold mb-8" style={{ color: 'var(--text-primary)' }}>My Team</h1>
+          <div className="flex items-center justify-center py-12">
+            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--neon-cyan)' }}></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => <CardSkeleton key={i} />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-0">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <h1 className="text-3xl font-bold mb-8" style={{ color: 'var(--text-primary)' }}>My Team</h1>
+          <div className="glass-card rounded-2xl border p-8 text-center" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+            <i className="uil uil-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+            <p style={{ color: 'var(--text-secondary)' }}>{error}</p>
+            <button
+              onClick={fetchMyTeam}
+              className="mt-4 px-6 py-2 rounded-lg transition-colors"
+              style={{ background: 'var(--neon-gradient)', color: '#FFFFFF' }}
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </div>
@@ -268,217 +107,113 @@ const Teams = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary">
+    <div className="min-h-screen pt-0">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-1">Teams</h1>
-            <p className="text-text-muted text-sm">Find teammates and collaborate on projects</p>
-          </div>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>My Team</h1>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowInviteModal(true)}
-              className="px-5 py-2.5 bg-violet hover:bg-violet/80 text-white font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-violet/25 hover:scale-105 flex items-center gap-2"
+              onClick={fetchMyTeam}
+              disabled={loading}
+              className="font-medium px-4 py-2 rounded-lg transition-colors border"
+              style={{ borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)' }}
+              title="Refresh team data"
             >
-              <i className="uil uil-envelope text-sm"></i>
-              Invitations {invitations.length > 0 && `(${invitations.length})`}
+              <i className={`uil uil-refresh ${loading ? 'animate-spin' : ''}`}></i>
             </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-cyan hover:bg-cyan/80 text-black font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan/25 hover:scale-105 flex items-center gap-2"
-            >
-              <i className="uil uil-plus text-sm"></i>
-              Create Team
-            </button>
-          </div>
-        </div>
-
-        {/* Compact Filter Bar */}
-        <div className="glass-card rounded-xl border border-white/10 p-4 shadow-lg">
-          <div className="flex flex-wrap items-center gap-3">
-
-            {/* Search */}
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <i className="uil uil-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted text-sm"></i>
-                <input
-                  type="text"
-                  placeholder="Search teams..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  onKeyPress={handleSearchSubmit}
-                  className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-text-muted focus:border-cyan/50 focus:outline-none transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Track Filter */}
-            <select
-              value={filters.track}
-              onChange={(e) => handleFilterChange('track', e.target.value)}
-              className={`px-3 py-2 bg-white/5 border rounded-full text-white text-sm focus:outline-none transition-all duration-200 ${
-                filters.track !== 'all' ? 'border-cyan/50 shadow-lg shadow-cyan/10/20' : 'border-white/10'
-              }`}
-            >
-              <option value="all">All Tracks</option>
-              <option value="AI/ML">AI/ML</option>
-              <option value="Web3">Web3</option>
-              <option value="Gaming">Gaming</option>
-              <option value="Open Innovation">Open Innovation</option>
-            </select>
-
-            {/* Sort */}
-            <select
-              value={filters.sort}
-              onChange={(e) => handleFilterChange('sort', e.target.value)}
-              className="px-3 py-2 bg-white/5 border border-white/10 rounded-full text-white text-sm focus:border-cyan/50 focus:outline-none transition-colors"
-            >
-              <option value="name">Sort by Name</option>
-              <option value="rank">Sort by Rank</option>
-              <option value="projects">Sort by Projects</option>
-            </select>
-
-            {/* Reset */}
-            <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-text-secondary hover:text-white text-sm transition-all duration-200"
-            >
-              Reset
-            </button>
-
-            {/* Apply */}
-            <button
-              onClick={handleApply}
-              disabled={!hasChanges}
-              className="px-4 py-2 bg-cyan hover:bg-cyan/80 disabled:bg-white/5 disabled:text-text-muted text-black font-medium rounded-full text-sm transition-all duration-200 disabled:cursor-not-allowed"
-            >
-              Apply
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        {filteredTeams.length === 0 ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto">
-                <i className="uil uil-users-alt text-2xl text-text-muted"></i>
-              </div>
-              <h3 className="text-xl font-semibold text-white">No teams found</h3>
-              <p className="text-text-secondary max-w-sm">
-                {filters.search ? `No teams match "${filters.search}"` : 'Be the first to create a team and start building amazing projects!'}
-              </p>
+            {!myTeam && (
               <button
-                onClick={handleCreateTeam}
-                className="px-6 py-3 bg-cyan hover:bg-cyan/80 text-black font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan/25 hover:scale-105 animate-pulse"
+                onClick={() => navigate('/join-hackathon')}
+                className="font-medium px-4 py-2 rounded-lg transition-colors"
+                style={{ background: 'var(--neon-gradient)', color: '#FFFFFF' }}
               >
-                Create Your Team
+                Join Hackathon
               </button>
+            )}
+          </div>
+        </div>
+        
+        {!myTeam ? (
+          <div className="glass-card rounded-2xl border p-8 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}>
+              <i className="uil uil-users-alt text-3xl" style={{ color: 'var(--text-muted)' }}></i>
             </div>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No team found</h3>
+            <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>Join a hackathon and create a team to get started!</p>
+            <button
+              onClick={() => navigate('/join-hackathon')}
+              className="font-medium px-6 py-2 rounded-lg transition-colors"
+              style={{ background: 'var(--neon-gradient)', color: '#FFFFFF' }}
+            >
+              Join Hackathon
+            </button>
           </div>
         ) : (
-          <div className={`transition-all duration-500 ${isRefreshing ? 'opacity-50' : 'opacity-100'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredTeams.map((team, index) => (
-                <TeamCard key={team.id} team={team} index={index} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Create Team Modal */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
-            <div className="bg-bg-card border border-white/10 rounded-2xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-2xl font-bold text-white mb-4">Create Team</h2>
-              <form onSubmit={handleCreateTeam} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Hackathon</label>
-                  <select value={createForm.hackathon_id} onChange={(e) => setCreateForm({...createForm, hackathon_id: e.target.value})} className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white ${errors.hackathon_id ? 'border-red-500' : 'border-white/10'}`} required>
-                    <option value="">Select hackathon...</option>
-                    {hackathons.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                  </select>
-                  {errors.hackathon_id && <p className="text-red-400 text-xs mt-1">{errors.hackathon_id}</p>}
+          <div className="glass-card rounded-2xl border p-6" style={{ borderColor: 'var(--neon-cyan)', background: 'rgba(var(--neon-cyan-rgb, 45, 183, 209), 0.05)' }}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>{myTeam.team_name}</h3>
+                  <span className="px-2 py-1 text-xs rounded-full" style={{ background: 'rgba(var(--neon-cyan-rgb, 45, 183, 209), 0.2)', color: 'var(--neon-cyan)' }}>
+                    Your Team
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Team Name</label>
-                  <input type="text" value={createForm.team_name} onChange={(e) => setCreateForm({...createForm, team_name: e.target.value})} className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white ${errors.team_name ? 'border-red-500' : 'border-white/10'}`} required />
-                  {errors.team_name && <p className="text-red-400 text-xs mt-1">{errors.team_name}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Project Title</label>
-                  <input type="text" value={createForm.project_title} onChange={(e) => setCreateForm({...createForm, project_title: e.target.value})} className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white ${errors.project_title ? 'border-red-500' : 'border-white/10'}`} required />
-                  {errors.project_title && <p className="text-red-400 text-xs mt-1">{errors.project_title}</p>}
-                </div>
-                <div className="flex gap-2">
-                  <button type="submit" disabled={submitting} className="flex-1 bg-cyan hover:bg-cyan/80 disabled:opacity-50 text-black font-medium py-2 rounded-lg">{submitting ? 'Creating...' : 'Create'}</button>
-                  <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Invitations Modal */}
-        {showInviteModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowInviteModal(false)}>
-            <div className="bg-bg-card border border-white/10 rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-2xl font-bold text-white mb-4">Team Invitations</h2>
-              
-              {localStorage.getItem('team_id') && (
-                <div className="mb-6 p-4 bg-white/5 rounded-lg">
-                  <h3 className="font-semibold text-white mb-3">Send Invitation</h3>
-                  <form onSubmit={handleSendInvite} className="flex gap-2">
-                    <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="Enter email" className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white" required />
-                    <button type="submit" disabled={submitting} className="bg-cyan hover:bg-cyan/80 disabled:opacity-50 text-black font-medium px-4 py-2 rounded-lg">{submitting ? 'Sending...' : 'Send'}</button>
-                  </form>
-                  {sentInvites.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      <h4 className="text-sm font-medium text-text-secondary">Sent Invitations</h4>
-                      {sentInvites.map(inv => (
-                        <div key={inv.id} className="flex justify-between items-center p-2 bg-white/5 rounded">
-                          <span className="text-white text-sm">{inv.invitee_email}</span>
-                          <span className={`px-2 py-1 rounded text-xs ${inv.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' : inv.status === 'accepted' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>{inv.status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <h3 className="font-semibold text-white mb-3">Received Invitations</h3>
-                {invitations.length === 0 ? (
-                  <p className="text-text-muted text-sm">No pending invitations</p>
-                ) : (
-                  <div className="space-y-3">
-                    {invitations.map(inv => (
-                      <div key={inv.id} className="p-4 bg-white/5 border border-white/10 rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold text-white">{inv.team_name}</h4>
-                            <p className="text-sm text-text-secondary">From: {inv.inviter_name}</p>
-                            <p className="text-sm text-text-muted">Hackathon: {inv.hackathon_name}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <button onClick={() => handleRespondInvite(inv.id, true)} disabled={submitting} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm">Accept</button>
-                            <button onClick={() => handleRespondInvite(inv.id, false)} disabled={submitting} className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-3 py-1 rounded text-sm">Decline</button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                {myTeam.project_title && (
+                  <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{myTeam.project_title}</p>
                 )}
               </div>
+            </div>
 
-              <button onClick={() => setShowInviteModal(false)} className="mt-4 w-full bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg">Close</button>
+            <div className="space-y-3 mb-4">
+              <div className="flex items-center gap-2 text-sm">
+                <i className="uil uil-calendar-alt" style={{ color: 'var(--text-muted)' }}></i>
+                <span style={{ color: 'var(--text-secondary)' }}>Created:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{new Date(myTeam.created_at).toLocaleDateString()}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm">
+                <i className="uil uil-users-alt" style={{ color: 'var(--text-muted)' }}></i>
+                <span style={{ color: 'var(--text-secondary)' }}>Members:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{myTeam.members?.length || 1}</span>
+              </div>
+
+              {myTeam.members && myTeam.members.length > 0 && (
+                <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Team Members:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {myTeam.members.map((member, idx) => (
+                      <span 
+                        key={idx}
+                        className="px-2 py-1 text-xs rounded-lg"
+                        style={{ background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)' }}
+                      >
+                        {typeof member === 'string' ? member : member.name || member.email}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <button
+                onClick={() => navigate('/app/submissions')}
+                className="flex-1 font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                style={{ background: 'var(--neon-gradient)', color: '#FFFFFF' }}
+              >
+                Submit Project
+              </button>
+              <button
+                className="px-4 py-2 border rounded-lg transition-colors text-sm"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.2)', color: 'var(--text-secondary)' }}
+                onClick={() => alert('Invite feature coming soon!')}
+              >
+                Invite Members
+              </button>
             </div>
           </div>
         )}
       </div>
-      <ToastContainer toasts={toasts} />
     </div>
   );
 };

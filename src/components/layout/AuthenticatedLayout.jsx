@@ -21,7 +21,7 @@ const AuthenticatedLayout = ({ children }) => {
   const participantSidebarItems = [
     { icon: 'uil-home', label: 'Home', path: '/app' },
     { icon: 'uil-calendar-alt', label: 'Join Hackathon', path: '/join-hackathon' },
-    { icon: 'uil-users-alt', label: 'Teams', path: '/app/teams' },
+    { icon: 'uil-users-alt', label: 'My Team', path: '/app/teams' },
     { icon: 'uil-rocket', label: 'Projects', path: '/app/projects' },
     { icon: 'uil-file-upload-alt', label: 'Submissions', path: '/app/submissions' },
     { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
@@ -48,7 +48,7 @@ const AuthenticatedLayout = ({ children }) => {
   const sidebarItems = getSidebarItems();
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #0D1128 0%, #15193B 100%)' }}>
+    <div className="min-h-screen transition-all duration-300" style={{ background: 'linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%)' }}>
       <Topbar />
       <div className="flex">
         <Sidebar
@@ -56,8 +56,8 @@ const AuthenticatedLayout = ({ children }) => {
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={setIsSidebarCollapsed}
         />
-        <main className={`flex-1 h-screen overflow-hidden transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
-          <div className="h-full pb-8 px-8">
+        <main className={`flex-1 min-h-screen overflow-y-auto transition-all duration-300 pt-16 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+          <div className="pb-8 px-8">
             {children}
           </div>
         </main>

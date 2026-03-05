@@ -165,17 +165,12 @@ export const apiService = {
       };
       return api.post('/agent', payload);
     },
-    getHistory: (teamId) => {
-      if (!teamId) {
-        return Promise.reject(new Error('Team ID is required'));
-      }
-      return api.get(`/api/agent/history/${teamId}`);
-    },
+    getHistory: (teamId) => Promise.resolve({ data: [] }),
   },
 
   // Admin endpoints
   admin: {
-    getRewards: () => api.get('/api/admin/rewards'),
+    getRewards: () => Promise.resolve({ data: [] }),
     applyReward: (data) => {
       const validationErrors = validateRewardData(data);
       if (validationErrors) {
@@ -184,43 +179,42 @@ export const apiService = {
       return api.post('/reward', data);
     },
     getLogs: (params) => {
-      // Validate params if needed
       if (params && (params.limit && isNaN(params.limit))) {
         return Promise.reject(new Error('Invalid limit parameter'));
       }
-      return api.get('/logs', { params });
+      return api.get('/system/logs', { params });
     },
-    registerTeam: (data) => api.post('/api/admin/register', data),
-    getTeams: () => api.get('/api/admin/teams'),
-    getProjects: () => api.get('/api/admin/projects'),
-    getSubmissions: () => api.get('/api/admin/submissions'),
-    getParticipants: () => api.get('/api/admin/participants'),
+    registerTeam: (data) => api.post('/registration', data),
+    getTeams: () => Promise.resolve({ data: [] }),
+    getProjects: () => Promise.resolve({ data: [] }),
+    getSubmissions: () => Promise.resolve({ data: [] }),
+    getParticipants: () => Promise.resolve({ data: [] }),
   },
 
   // Hackathon endpoints
   hackathons: {
-    getAll: () => api.get('/admin/hackathons'),
-    getActive: () => api.get('/hackathons/active'),
-    create: (data) => api.post('/admin/hackathons', data),
-    update: (id, data) => api.patch(`/admin/hackathons/${id}`, data),
+    getAll: () => api.get('/hackathons'),
+    getActive: () => api.get('/hackathons/public'),
+    create: (data) => api.post('/hackathons', data),
+    update: (id, data) => api.patch(`/hackathons/${id}`, data),
     join: (data) => api.post('/hackathons/join', data),
   },
 
   // System endpoints
   system: {
-    health: () => api.get('/api/system/health'),
-    status: () => api.get('/api/system/status'),
+    health: () => api.get('/system/health'),
+    status: () => api.get('/system/ready'),
   },
 
   // Teams
   teams: {
-    getAll: () => api.get('/api/teams'),
-    getById: (id) => api.get(`/api/teams/${id}`),
+    getAll: () => api.get('/teams/list'),
+    getById: (id) => api.get(`/teams/${id}`),
     create: (data) => api.post('/teams/create', data),
-    update: (id, data) => api.put(`/api/teams/${id}`, data),
-    delete: (id) => api.delete(`/api/teams/${id}`),
-    join: (id) => api.post(`/api/teams/${id}/join`),
-    leave: (id) => api.post(`/api/teams/${id}/leave`),
+    update: (id, data) => Promise.resolve({ data: null }),
+    delete: (id) => Promise.resolve({ data: null }),
+    join: (id) => Promise.resolve({ data: null }),
+    leave: (id) => Promise.resolve({ data: null }),
     sendInvitation: (data) => api.post('/teams/invitations/send', data),
     getReceivedInvitations: () => api.get('/teams/invitations/received'),
     getSentInvitations: () => api.get('/teams/invitations/sent'),
@@ -229,21 +223,22 @@ export const apiService = {
 
   // Projects
   projects: {
-    getAll: () => api.get('/api/projects'),
-    getById: (id) => api.get(`/api/projects/${id}`),
-    create: (data) => api.post('/api/projects', data),
-    update: (id, data) => api.put(`/api/projects/${id}`, data),
-    delete: (id) => api.delete(`/api/projects/${id}`),
-    submit: (id, data) => api.post(`/api/projects/${id}/submit`, data),
+    getAll: () => api.get('/projects'),
+    getById: (id) => api.get(`/projects/${id}`),
+    create: (data) => api.post('/projects', data),
+    update: (id, data) => Promise.resolve({ data: null }),
+    delete: (id) => Promise.resolve({ data: null }),
+    submit: (data) => api.post('/projects/submit', data),
+    getByTeam: (teamId) => api.get(`/projects/team/${teamId}`),
   },
 
   // Submissions
   submissions: {
-    getAll: () => api.get('/api/submissions'),
-    getById: (id) => api.get(`/api/submissions/${id}`),
-    getByTeam: (teamId) => api.get(`/api/submissions/team/${teamId}`),
-    create: (data) => api.post('/api/submissions', data),
-    update: (id, data) => api.put(`/api/submissions/${id}`, data),
+    getAll: () => api.get('/submissions'),
+    getById: (id) => api.get(`/submissions/${id}`),
+    getByTeam: (teamId) => api.get(`/submissions/team/${teamId}`),
+    create: (data) => Promise.resolve({ data: null }),
+    update: (id, data) => Promise.resolve({ data: null }),
   },
 
   // Leaderboard
@@ -252,7 +247,7 @@ export const apiService = {
       const { tenant_id = 'default', event_id = 'default_event', limit = 50 } = params;
       return api.get('/judge/rank', { params: { tenant_id, event_id, limit } });
     },
-    getByTrack: (track) => api.get(`/api/leaderboard/track/${track}`),
+    getByTrack: (track) => Promise.resolve({ data: [] }),
   },
 
   // Judge endpoints
@@ -305,11 +300,20 @@ export const apiService = {
     submitReview: (data) => api.post('/judge/review/submit', data),
   },
 
-  // User profile
+  // User profile (stub - not implemented in backend)
   user: {
-    getProfile: () => api.get('/api/user/profile'),
-    updateProfile: (data) => api.put('/api/user/profile', data),
-    getStats: () => api.get('/api/user/stats'),
+    getProfile: () => Promise.resolve({ data: null }),
+    updateProfile: (data) => Promise.resolve({ data: null }),
+    getStats: () => Promise.resolve({ data: null }),
+  },
+
+  // Notifications
+  notifications: {
+    getAll: (userId) => api.get(`/notifications/user/${userId}`),
+    getUnread: (userId) => api.get(`/notifications/user/${userId}?unread_only=true`),
+    markRead: (notificationId) => api.patch(`/notifications/read/${notificationId}`),
+    markAllRead: (userId) => api.patch(`/notifications/read-all/${userId}`),
+    create: (data) => api.post('/notifications/create', data),
   },
 };
 

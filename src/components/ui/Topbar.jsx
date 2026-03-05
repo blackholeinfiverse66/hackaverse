@@ -121,15 +121,15 @@ const Topbar = ({ onSearchOpen, onAccountMenuOpen }) => {
     <header className="topbar" style={{
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
-      background: 'rgba(13, 20, 59, 0.8)'
+      background: 'rgba(var(--bg-gradient-start-rgb, 13, 20, 59), 0.8)'
     }}>
       <div className="topbar-content">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--neon-gradient)' }}>
             <span className="text-white font-bold text-sm">H</span>
           </div>
-          <span className="text-white font-bold text-xl">HackaVerse</span>
+          <span className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>HackaVerse</span>
         </Link>
 
         {/* Search */}
@@ -162,7 +162,8 @@ const Topbar = ({ onSearchOpen, onAccountMenuOpen }) => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="relative p-2 text-gray-400 hover:text-white transition-colors"
+            className="relative p-2 transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
             title="Toggle dark mode (Cmd+B)"
             aria-label="Toggle dark mode"
           >
@@ -173,7 +174,8 @@ const Topbar = ({ onSearchOpen, onAccountMenuOpen }) => {
           <button
             ref={notificationRef}
             onClick={handleNotificationToggle}
-            className="relative p-2 text-gray-400 hover:text-white transition-colors"
+            className="relative p-2 transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
             title="Notifications"
             aria-label="Notifications"
             aria-expanded={isNotificationOpen}

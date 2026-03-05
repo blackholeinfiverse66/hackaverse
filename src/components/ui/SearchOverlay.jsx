@@ -6,12 +6,7 @@ const SearchOverlay = ({ isOpen, onClose, searchValue, inputRef }) => {
   const [results, setResults] = useState([]);
   const overlayRef = useRef(null);
 
-  const mockResults = useMemo(() => [
-    { id: 1, type: 'submission', title: 'AI Campus Navigator', subtitle: 'Team Alpha • AI/ML Track', icon: 'uil-file-alt' },
-    { id: 2, type: 'team', title: 'Team Beta', subtitle: '3 members • Web3 Track', icon: 'uil-users-alt' },
-    { id: 3, type: 'project', title: 'Blockchain Voting', subtitle: 'In Progress • Web3', icon: 'uil-rocket' },
-    { id: 4, type: 'participant', title: 'John Doe', subtitle: 'AI/ML Specialist', icon: 'uil-user' }
-  ], []);
+  const mockResults = useMemo(() => [], []);
 
   useEffect(() => {
     if (searchValue?.trim()) {

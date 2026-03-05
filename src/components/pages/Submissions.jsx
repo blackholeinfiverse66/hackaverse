@@ -32,9 +32,18 @@ const Submissions = () => {
       setIsLoading(true);
       try {
         const response = await apiService.submissions.getAll();
-        setSubmissions(response.data);
+        const data = response.data;
+        // Ensure submissions is always an array
+        if (data && Array.isArray(data)) {
+          setSubmissions(data);
+        } else if (data && data.data && Array.isArray(data.data)) {
+          setSubmissions(data.data);
+        } else {
+          setSubmissions([]);
+        }
       } catch (error) {
         console.error('Failed to fetch submissions:', error);
+        setSubmissions([]);
         // Fallback to mock data for development
         if (import.meta.env.VITE_USE_MOCK_API !== 'false') {
           const mockSubmissions = [
@@ -102,14 +111,14 @@ const Submissions = () => {
   }, []);
 
   const categories = [
-    { id: 'all', label: 'All', count: submissions.length },
-    { id: 'queued', label: 'Queued', count: submissions.filter(s => s.status === 'queued').length },
-    { id: 'scoring', label: 'Scoring', count: submissions.filter(s => s.status === 'scoring').length },
-    { id: 'passed', label: 'Passed', count: submissions.filter(s => s.status === 'passed').length },
-    { id: 'failed', label: 'Failed', count: submissions.filter(s => s.status === 'failed').length }
+    { id: 'all', label: 'All', count: Array.isArray(submissions) ? submissions.length : 0 },
+    { id: 'queued', label: 'Queued', count: Array.isArray(submissions) ? submissions.filter(s => s.status === 'queued').length : 0 },
+    { id: 'scoring', label: 'Scoring', count: Array.isArray(submissions) ? submissions.filter(s => s.status === 'scoring').length : 0 },
+    { id: 'passed', label: 'Passed', count: Array.isArray(submissions) ? submissions.filter(s => s.status === 'passed').length : 0 },
+    { id: 'failed', label: 'Failed', count: Array.isArray(submissions) ? submissions.filter(s => s.status === 'failed').length : 0 }
   ];
 
-  const filteredSubmissions = submissions.filter(submission => {
+  const filteredSubmissions = Array.isArray(submissions) ? submissions.filter(submission => {
     if (activeCategory !== 'all' && submission.status !== activeCategory) return false;
     if (filters.search && !submission.project.toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.track !== 'all' && submission.track !== filters.track) return false;
@@ -120,7 +129,7 @@ const Submissions = () => {
     if (filters.sort === 'oldest') return new Date(a.submitted) - new Date(b.submitted);
     if (filters.sort === 'priority') return (b.score || 0) - (a.score || 0);
     return 0;
-  });
+  }) : [];
 
   const handleCategoryChange = (categoryId) => {
     setActiveCategory(categoryId);

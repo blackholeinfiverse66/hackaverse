@@ -2,46 +2,36 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import UIPortal from './UIPortal';
+import { apiService } from '../../services/api';
 
 const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const dropdownRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock notifications data
-  const [notifications] = useState([
-    {
-      id: 1,
-      type: 'submission',
-      title: 'New Submission Received',
-      message: 'Team Alpha submitted their AI/ML project',
-      time: '2 minutes ago',
-      read: false
-    },
-    {
-      id: 2,
-      type: 'judge',
-      title: 'Judge Assigned',
-      message: 'Dr. Sarah Chen has been assigned to evaluate your project',
-      time: '1 hour ago',
-      read: false
-    },
-    {
-      id: 3,
-      type: 'deadline',
-      title: 'Deadline Reminder',
-      message: 'Submission deadline is approaching in 24 hours',
-      time: '3 hours ago',
-      read: true
-    },
-    {
-      id: 4,
-      type: 'announcement',
-      title: 'Hackathon Update',
-      message: 'New judging criteria have been published',
-      time: '1 day ago',
-      read: true
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchNotifications();
     }
-  ]);
+  }, [isOpen, user]);
+
+  const fetchNotifications = async () => {
+    if (!user?.user_id) return;
+    
+    setLoading(true);
+    try {
+      const response = await apiService.notifications.getAll(user.user_id);
+      if (response.data.success) {
+        setNotifications(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -77,24 +67,36 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
     };
   }, [isOpen, onClose, triggerRef]);
 
-  const handleNotificationClick = (notification) => {
-    // Mark as read (in a real app, this would update the backend)
-    notification.read = true;
+  const handleNotificationClick = async (notification) => {
+    // Mark as read
+    try {
+      await apiService.notifications.markRead(notification.notification_id);
+      setNotifications(prev => 
+        prev.map(n => n.notification_id === notification.notification_id ? {...n, read: true} : n)
+      );
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
 
     // Navigate based on notification type
     switch (notification.type) {
-      case 'submission':
-        navigate('/admin/submissions');
+      case 'hackathon_joined':
+        navigate('/app/home');
         break;
-      case 'judge':
-        navigate('/judge/queue');
+      case 'invitation_received':
+        navigate('/teams/invitations');
         break;
-      case 'deadline':
-        navigate('/app/submissions');
+      case 'invitation_accepted':
+        navigate('/teams');
         break;
-      case 'announcement':
+      case 'project_submitted':
+        navigate('/submissions');
+        break;
+      case 'judge_reviewed':
+        navigate('/leaderboard');
+        break;
+      default:
         navigate('/logs');
-        break;
     }
 
     onClose();
@@ -102,14 +104,16 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'submission':
+      case 'hackathon_joined':
+        return 'uil-trophy';
+      case 'invitation_received':
+        return 'uil-envelope';
+      case 'invitation_accepted':
+        return 'uil-check-circle';
+      case 'project_submitted':
         return 'uil-file-upload';
-      case 'judge':
+      case 'judge_reviewed':
         return 'uil-user-check';
-      case 'deadline':
-        return 'uil-clock';
-      case 'announcement':
-        return 'uil-megaphone';
       default:
         return 'uil-bell';
     }
@@ -117,17 +121,30 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
 
   const getNotificationColor = (type) => {
     switch (type) {
-      case 'submission':
-        return 'text-blue-400';
-      case 'judge':
+      case 'hackathon_joined':
         return 'text-green-400';
-      case 'deadline':
-        return 'text-orange-400';
-      case 'announcement':
+      case 'invitation_received':
+        return 'text-blue-400';
+      case 'invitation_accepted':
+        return 'text-green-400';
+      case 'project_submitted':
         return 'text-purple-400';
+      case 'judge_reviewed':
+        return 'text-orange-400';
       default:
         return 'text-gray-400';
     }
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // seconds
+    
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
   };
 
   const getPosition = () => {
@@ -184,7 +201,12 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
         </div>
 
         <div className="notification-list">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div className="notification-empty">
+              <div className="animate-spin text-2xl text-cyan-400 mb-2">⟳</div>
+              <p className="text-gray-400 text-sm">Loading notifications...</p>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="notification-empty">
               <i className="uil uil-bell-slash text-2xl text-gray-400 mb-2"></i>
               <p className="text-gray-400 text-sm">No notifications yet</p>
@@ -192,7 +214,7 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
           ) : (
             notifications.map((notification) => (
               <div
-                key={notification.id}
+                key={notification.notification_id}
                 className={`notification-item ${!notification.read ? 'unread' : ''}`}
                 role="menuitem"
                 tabIndex={0}
@@ -206,7 +228,7 @@ const NotificationDropdown = ({ isOpen, onClose, triggerRef }) => {
                 <div className="notification-content">
                   <div className="notification-title-text">{notification.title}</div>
                   <div className="notification-message">{notification.message}</div>
-                  <div className="notification-time">{notification.time}</div>
+                  <div className="notification-time">{formatTime(notification.created_at)}</div>
                 </div>
 
                 {!notification.read && (

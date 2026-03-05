@@ -61,33 +61,7 @@ const NotificationPanel = ({ isOpen, onClose, triggerRef }) => {
 
   const position = getPosition();
 
-  // Mock notifications data
-  const notifications = [
-    {
-      id: 1,
-      type: 'announcement',
-      title: 'Hackathon Registration Open',
-      message: 'Registration for the next hackathon is now open. Submit your projects by the deadline!',
-      time: '2 hours ago',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'update',
-      title: 'Project Submission Reminder',
-      message: 'Don\'t forget to submit your project before the deadline. Check the guidelines.',
-      time: '1 day ago',
-      unread: true
-    },
-    {
-      id: 3,
-      type: 'result',
-      title: 'Judging Results Available',
-      message: 'The judging results for Phase 1 are now available. Check your scores!',
-      time: '3 days ago',
-      unread: false
-    }
-  ];
+  const notifications = [];
 
   const getNotificationIcon = (type) => {
     switch (type) {

@@ -24,9 +24,18 @@ const Projects = () => {
       setIsLoading(true);
       try {
         const response = await apiService.projects.getAll();
-        setProjects(response.data);
+        const data = response.data;
+        // Ensure projects is always an array
+        if (data && Array.isArray(data)) {
+          setProjects(data);
+        } else if (data && data.data && Array.isArray(data.data)) {
+          setProjects(data.data);
+        } else {
+          setProjects([]);
+        }
       } catch (error) {
         console.error('Failed to fetch projects:', error);
+        setProjects([]);
         // Fallback to mock data for development
         if (import.meta.env.VITE_USE_MOCK_API !== 'false') {
           const mockProjects = [
@@ -71,12 +80,12 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = Array.isArray(projects) ? projects.filter(project => {
     if (filters.search && !project.title.toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.track !== 'all' && project.track !== filters.track) return false;
     if (filters.status !== 'all' && project.status !== filters.status) return false;
     return true;
-  });
+  }) : [];
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { apiService } from '../../services/api';
+import { API_BASE_URL } from '../../constants/appConstants';
 
 const JudgeHome = () => {
   const { logout } = useAuth();
@@ -22,39 +22,52 @@ const JudgeHome = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.judge.getRankings({
-        tenant_id: 'default',
-        event_id: 'default_event',
-        limit: 10
+      const response = await fetch(`${API_BASE_URL}/judge/rank`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
+        },
+        body: JSON.stringify({
+          tenant_id: 'default',
+          event_id: 'default_event',
+          limit: 10
+        })
       });
       
-      const rankings = response.data?.rankings || [];
-      
-      // Calculate stats
-      const total = rankings.length;
-      const avgScore = total > 0 
-        ? (rankings.reduce((sum, r) => sum + r.total_score, 0) / total).toFixed(1)
-        : 0;
-      
-      setStats({
-        pendingReviews: 0,
-        completedReviews: total,
-        averageScore: avgScore,
-        totalSubmissions: total
-      });
-      
-      // Format recent submissions
-      const recent = rankings.slice(0, 4).map((item, index) => ({
-        id: index + 1,
-        title: `Project by ${item.team_id}`,
-        team: item.team_id,
-        track: 'AI/ML',
-        status: 'judged',
-        score: item.total_score,
-        updated: 'Recently'
-      }));
-      
-      setRecentSubmissions(recent);
+      if (response.ok) {
+        const data = await response.json();
+        const rankings = data.data?.rankings || [];
+        
+        // Calculate stats
+        const total = rankings.length;
+        const avgScore = total > 0 
+          ? (rankings.reduce((sum, r) => sum + (r.total_score || 0), 0) / total).toFixed(1)
+          : 0;
+        
+        setStats({
+          pendingReviews: Math.max(0, total - rankings.filter(r => r.total_score > 0).length),
+          completedReviews: rankings.filter(r => r.total_score > 0).length,
+          averageScore: avgScore,
+          totalSubmissions: total
+        });
+        
+        // Format recent submissions
+        const recent = rankings.slice(0, 4).map((item, index) => ({
+          id: item.team_id || index + 1,
+          title: `Project by ${item.team_id}`,
+          team: item.team_id,
+          track: 'AI/ML',
+          status: item.total_score > 0 ? 'judged' : 'pending',
+          score: item.total_score || 0,
+          updated: 'Recently',
+          submission_time: item.submission_time || new Date().toISOString()
+        }));
+        
+        setRecentSubmissions(recent);
+      } else {
+        console.error('Failed to fetch judge data:', response.statusText);
+      }
     } catch (error) {
       console.error('Failed to fetch judge data:', error);
     } finally {

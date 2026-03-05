@@ -1,237 +1,269 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
-import QuickStartModal from './QuickStartModal';
+import { useNavigate } from 'react-router-dom';
+import CreateTeamModal from './CreateTeamModal';
+import { API_BASE_URL } from '../../constants/appConstants';
 
 const ParticipantHome = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [hackathons, setHackathons] = useState([]);
+  const [selectedHackathon, setSelectedHackathon] = useState(null);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userTeam, setUserTeam] = useState(null);
 
-  const [upcomingDeadlines] = useState([
-    {
-      id: 1,
-      label: 'Project Submission',
-      date: 'March 15, 2024',
-      remaining: '5 days left',
-      status: 'critical',
-      type: 'submission'
-    },
-    {
-      id: 2,
-      label: 'Team Formation Deadline',
-      date: 'March 10, 2024',
-      remaining: '2 days left',
-      status: 'warning',
-      type: 'team'
-    },
-    {
-      id: 3,
-      label: 'Mentor Session',
-      date: 'March 8, 2024',
-      remaining: '1 day left',
-      status: 'info',
-      type: 'meeting'
-    }
-  ]);
+  useEffect(() => {
+    fetchHackathons();
+    checkUserTeam();
+  }, []);
 
-  const [progress] = useState({
-    profileCompletion: 85,
-    teamStatus: 'Joined Team Alpha',
-    submissionStatus: 'In Progress'
-  });
-
-  const [showQuickStart, setShowQuickStart] = useState(false);
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'critical': return 'text-red-400 bg-red-400/20 border-red-400/30';
-      case 'warning': return 'text-yellow-400 bg-yellow-400/20 border-yellow-400/30';
-      case 'info': return 'text-cyan-400 bg-cyan-400/20 border-cyan-400/30';
-      default: return 'text-gray-400 bg-gray-400/20 border-gray-400/30';
+  const fetchHackathons = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/hackathons/public`, {
+        headers: { 
+          'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setHackathons(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch hackathons:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getTimelineIcon = (type) => {
-    switch (type) {
-      case 'submission': return 'uil-file-upload';
-      case 'team': return 'uil-users-alt';
-      case 'meeting': return 'uil-calendar-alt';
-      default: return 'uil-clock';
+  const checkUserTeam = () => {
+    const teamId = localStorage.getItem('team_id');
+    const hackathonId = localStorage.getItem('hackathon_id');
+    if (teamId && hackathonId) {
+      setUserTeam({ team_id: teamId, hackathon_id: hackathonId });
     }
   };
 
-  const quickActions = [
-    { icon: 'uil-rocket', label: 'Start Project', path: '/app/projects', color: 'cyan' },
-    { icon: 'uil-users-alt', label: 'Join Team', path: '/app/teams', color: 'violet' },
-    { icon: 'uil-file-upload-alt', label: 'Submit Work', path: '/app/submissions', color: 'lime' },
-    { icon: 'uil-user-circle', label: 'Edit Profile', path: '/app/profile', color: 'orange' }
-  ];
+  const handleJoinHackathon = async (hackathon) => {
+    try {
+      localStorage.setItem('joining_hackathon_id', hackathon.id);
+      localStorage.setItem('joining_hackathon_name', hackathon.name);
+      navigate(`/create-team/${hackathon.id}`);
+    } catch (error) {
+      console.error('Failed to join hackathon:', error);
+    }
+  };
+
+  const handleJoinSuccess = (teamData) => {
+    setUserTeam(teamData);
+    setShowJoinModal(false);
+    // Refresh hackathons to update participant counts
+    fetchHackathons();
+  };
+
+  const HackathonCard = ({ hackathon }) => {
+    const isActive = hackathon.status === 'active';
+    const hasEnded = new Date(hackathon.end_date) < new Date();
+    const isJoined = userTeam && userTeam.hackathon_id === hackathon.id;
+
+    return (
+      <div className="glass-card rounded-2xl border p-6 hover:border-cyan/40 transition-all duration-300">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{hackathon.name}</h3>
+            <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{hackathon.description}</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+            isActive && !hasEnded ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+          }`}>
+            {hasEnded ? 'Ended' : isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <div className="flex justify-between text-sm">
+            <span style={{ color: 'var(--text-muted)' }}>Start Date:</span>
+            <span style={{ color: 'var(--text-primary)' }}>{new Date(hackathon.start_date).toLocaleDateString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span style={{ color: 'var(--text-muted)' }}>End Date:</span>
+            <span style={{ color: 'var(--text-primary)' }}>{new Date(hackathon.end_date).toLocaleDateString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span style={{ color: 'var(--text-muted)' }}>Team Size:</span>
+            <span style={{ color: 'var(--text-primary)' }}>{hackathon.min_team_size}-{hackathon.max_team_size} members</span>
+          </div>
+        </div>
+
+        {isJoined ? (
+          <div className="flex gap-2">
+            <button 
+              onClick={() => navigate('/app/teams')}
+              className="flex-1 bg-green-500/20 text-green-400 border border-green-500/30 px-4 py-2 rounded-lg font-medium transition-colors hover:bg-green-500/30"
+            >
+              View My Team
+            </button>
+            <button 
+              onClick={() => navigate('/app/submissions')}
+              className="flex-1 bg-blue-500/20 text-blue-400 border border-blue-500/30 px-4 py-2 rounded-lg font-medium transition-colors hover:bg-blue-500/30"
+            >
+              Submit Project
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => handleJoinHackathon(hackathon)}
+            disabled={!isActive || hasEnded}
+            className="w-full font-medium px-4 py-2 rounded-lg transition-colors disabled:cursor-not-allowed"
+            style={{ 
+              background: (!isActive || hasEnded) ? 'rgba(128, 128, 128, 0.2)' : 'var(--neon-gradient)',
+              color: (!isActive || hasEnded) ? 'rgba(128, 128, 128, 0.6)' : '#FFFFFF'
+            }}
+          >
+            {hasEnded ? 'Hackathon Ended' : !isActive ? 'Not Active' : 'Join Hackathon'}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Dynamic 3D Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-xl animate-float"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-violet-500/10 rounded-full blur-xl animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-pink-500/5 rounded-full blur-2xl animate-float" style={{ animationDelay: '4s' }}></div>
-        <div className="absolute bottom-20 right-10 w-20 h-20 bg-blue-500/10 rounded-full blur-xl animate-float" style={{ animationDelay: '1s' }}></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-16 animate-slide-in-up">
-          <div className="mb-6">
-            <h1 className="text-5xl lg:text-6xl font-bold mb-4">
-              <span className="cosmic-text">Welcome back</span>
-              <br />
-              <span className="text-white">{user?.name?.split(' ')[0] || 'Participant'}</span>
-            </h1>
-            <p className="text-xl text-text-muted max-w-2xl mx-auto">
-              Ready to build something amazing? Let's get started on your hackathon journey.
-            </p>
+    <div className="min-h-screen pt-0">
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>Participant Dashboard</h1>
+            <p style={{ color: 'var(--text-muted)' }}>Join hackathons and build amazing projects</p>
           </div>
-
-          {/* Primary CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Link
-              to="/app/projects"
-              className="btn-primary px-8 py-4 text-lg font-semibold group"
-            >
-              <i className="uil uil-rocket mr-3 group-hover:animate-bounce"></i>
-              Start Your Project
-              <i className="uil uil-arrow-right ml-3 group-hover:translate-x-1 transition-transform"></i>
-            </Link>
-            <Link
-              to="/app/teams"
-              className="btn-secondary px-8 py-4 text-lg font-semibold"
-            >
-              <i className="uil uil-users-alt mr-3"></i>
-              Join a Team
-            </Link>
-          </div>
-        </div>
-
-        {/* Quick Actions Strip */}
-        <div className="glass-card rounded-2xl border p-6 mb-12 animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
-          <div className="flex flex-wrap justify-center gap-4">
-            {quickActions.map((action, index) => (
-              <Link
-                key={action.path}
-                to={action.path}
-                className={`flex items-center gap-3 px-6 py-3 rounded-full border border-${action.color}-400/30 bg-${action.color}-400/10 hover:bg-${action.color}-400/20 hover:border-${action.color}-400/50 transition-all duration-300 group animate-scale-in`}
-                style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+          <div className="flex items-center gap-2">
+            {userTeam && (
+              <button
+                onClick={() => navigate('/app/teams')}
+                className="btn-primary h-11 px-6"
               >
-                <div className={`w-8 h-8 bg-${action.color}-400/20 rounded-lg flex items-center justify-center group-hover:bg-${action.color}-400/30 transition-colors`}>
-                  <i className={`uil ${action.icon} text-${action.color}-400 text-sm`}></i>
-                </div>
-                <span className="text-white font-medium">{action.label}</span>
-                <i className={`uil uil-arrow-right text-${action.color}-400 text-sm group-hover:translate-x-1 transition-transform`}></i>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid xl:grid-cols-[1.2fr_1fr] gap-8">
-          {/* Upcoming Deadlines Timeline */}
-          <div className="glass-card rounded-2xl border animate-slide-in-left" style={{ animationDelay: '0.4s' }}>
-            <div className="p-6 border-b border-white/10 flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-3">
-                <i className="uil uil-calendar-alt text-cyan-400"></i>
-                Upcoming Deadlines
-              </h2>
-              <button className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
-                View all →
+                <i className="uil uil-users-alt mr-2"></i>
+                My Team
               </button>
-            </div>
-            <div className="p-6">
-              <div className="space-y-6">
-                {upcomingDeadlines.map((deadline, index) => (
-                  <div key={deadline.id} className="flex items-start gap-4 group animate-slide-in-left" style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl border-2 ${getStatusColor(deadline.status)} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <i className={`uil ${getTimelineIcon(deadline.type)} text-lg`}></i>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-white font-semibold text-lg">{deadline.label}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(deadline.status)}`}>
-                          {deadline.remaining}
-                        </span>
-                      </div>
-                      <p className="text-text-muted text-sm mb-3">{deadline.date}</p>
-                      <button className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
-                        View details →
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Your Progress */}
-          <div className="glass-card rounded-2xl border p-6 animate-slide-in-right" style={{ animationDelay: '0.6s' }}>
-            <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-3">
-              <i className="uil uil-chart-line text-violet-400"></i>
-              Your Progress
-            </h2>
-            <div className="space-y-8">
-              {/* Profile Completion */}
-              <div className="animate-fade-in" style={{ animationDelay: '0.7s' }}>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-text-muted text-sm font-medium">Profile Completion</span>
-                  <span className="text-white font-bold text-lg">{progress.profileCompletion}%</span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-3 mb-3 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-cyan-400 via-violet-400 to-pink-400 h-full rounded-full transition-all duration-1000 ease-out shadow-lg animate-glow-pulse"
-                    style={{ width: `${progress.profileCompletion}%` }}
-                  ></div>
-                </div>
-                <div className="flex gap-3 text-xs">
-                  <Link to="/app/profile" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">Add skills</Link>
-                  <span className="text-text-muted">•</span>
-                  <Link to="/app/profile" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">Update bio</Link>
-                </div>
-              </div>
-
-              {/* Team Status */}
-              <div className="animate-fade-in" style={{ animationDelay: '0.8s' }}>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-text-muted text-sm font-medium">Team Status</span>
-                  <span className="text-green-400 font-bold text-lg">{progress.teamStatus}</span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-3 mb-3 overflow-hidden">
-                  <div className="bg-gradient-to-r from-green-400 to-emerald-400 h-full rounded-full shadow-lg" style={{ width: '100%' }}></div>
-                </div>
-                <div className="flex gap-3 text-xs">
-                  <Link to="/app/teams" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">View team</Link>
-                  <span className="text-text-muted">•</span>
-                  <button className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">
-                    Invite members
-                  </button>
-                </div>
-              </div>
-
-              {/* Submission Status */}
-              <div className="animate-fade-in" style={{ animationDelay: '0.9s' }}>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-text-muted text-sm font-medium">Submission Status</span>
-                  <span className="text-yellow-400 font-bold text-lg">{progress.submissionStatus}</span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-3 mb-3 overflow-hidden">
-                  <div className="bg-gradient-to-r from-yellow-400 to-orange-400 h-full rounded-full shadow-lg" style={{ width: '60%' }}></div>
-                </div>
-                <div className="flex gap-3 text-xs">
-                  <Link to="/app/submissions" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">View progress</Link>
-                  <span className="text-text-muted">•</span>
-                  <Link to="/app/projects" className="text-cyan-400 hover:text-cyan-300 transition-colors font-medium">Continue building</Link>
-                </div>
-              </div>
-            </div>
+            )}
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="btn-secondary h-11 px-6"
+            >
+              <i className="uil uil-trophy mr-2"></i>
+              Leaderboard
+            </button>
           </div>
         </div>
 
+        {/* User Status */}
+        {userTeam && (
+          <div className="glass-card rounded-2xl border p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                <i className="uil uil-check text-green-400 text-xl"></i>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>You're participating!</h3>
+                <p style={{ color: 'var(--text-secondary)' }}>You have joined a hackathon. Check your team progress and submit your project.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Available Hackathons */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Available Hackathons</h2>
+            <button
+              onClick={fetchHackathons}
+              className="transition-colors"
+              style={{ color: 'var(--neon-cyan)' }}
+            >
+              <i className="uil uil-refresh mr-1"></i>
+              Refresh
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="glass-card rounded-2xl border p-6 animate-pulse">
+                  <div className="bg-white/10 h-6 rounded mb-4"></div>
+                  <div className="bg-white/10 h-4 rounded mb-2"></div>
+                  <div className="bg-white/10 h-4 rounded mb-4"></div>
+                  <div className="bg-white/10 h-10 rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : hackathons.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i className="uil uil-calendar-alt text-2xl" style={{ color: 'var(--text-muted)' }}></i>
+              </div>
+              <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>No hackathons available</h3>
+              <p style={{ color: 'var(--text-secondary)' }}>Check back later for new hackathons to join!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {hackathons.map(hackathon => (
+                <HackathonCard key={hackathon.id} hackathon={hackathon} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="glass-card rounded-2xl border p-6">
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/app/teams')}
+              className="p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-left"
+            >
+              <i className="uil uil-users-alt text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
+              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>View Teams</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Browse all teams</div>
+            </button>
+            <button
+              onClick={() => navigate('/app/projects')}
+              className="p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-left"
+            >
+              <i className="uil uil-rocket text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
+              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Projects</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>View all projects</div>
+            </button>
+            <button
+              onClick={() => navigate('/leaderboard')}
+              className="p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-left"
+            >
+              <i className="uil uil-trophy text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
+              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Leaderboard</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>See rankings</div>
+            </button>
+            <button
+              onClick={() => navigate('/mentors')}
+              className="p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-left"
+            >
+              <i className="uil uil-user-check text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
+              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Mentors</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Get help</div>
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Create Team Modal */}
+      {showJoinModal && selectedHackathon && (
+        <CreateTeamModal
+          hackathon={selectedHackathon}
+          onClose={() => {
+            setShowJoinModal(false);
+            setSelectedHackathon(null);
+          }}
+          onSuccess={handleJoinSuccess}
+        />
+      )}
     </div>
   );
 };

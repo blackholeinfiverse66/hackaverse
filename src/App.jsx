@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './components/ui/Toast'
+import { SyncProvider } from './contexts/SyncContext'
 import BackgroundProvider from './components/ui/BackgroundProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import MainPage from './components/MainPage'
@@ -34,7 +35,8 @@ const RewardManagement = lazy(() => import('./components/admin/RewardManagement'
 const HackathonManagement = lazy(() => import('./components/admin/HackathonManagement'))
 const JoinHackathon = lazy(() => import('./components/pages/JoinHackathon'))
 const ManualReview = lazy(() => import('./components/judge/ManualReview'))
-import Logs from './components/pages/Logs'
+const Logs = lazy(() => import('./components/pages/Logs'))
+const CreateTeam = lazy(() => import('./components/pages/CreateTeam'))
 import HealthWidget from './components/ui/HealthWidget'
 import KeyboardShortcutsModal from './components/ui/KeyboardShortcutsModal'
 
@@ -53,206 +55,217 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <ToastProvider>
-            <BackgroundProvider useStarfield={true} useGradient={true}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<MainPage />} />
-                <Route path="/leaderboard" element={<PublicLeaderboard />} />
+          <SyncProvider>
+            <ToastProvider>
+              <BackgroundProvider useStarfield={true} useGradient={true}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<MainPage />} />
+                  <Route path="/leaderboard" element={<PublicLeaderboard />} />
 
-                {/* Admin Routes */}
-                <Route path="/admin" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminHome />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/projects" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminProjects />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/participants" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminParticipants />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/submissions" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminSubmissions />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/settings" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <AdminSettings />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/register-team" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <TeamRegistration />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/hackathons" element={
-                  <ProtectedRoute requiredRole="admin">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <HackathonManagement />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <AdminHome />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/projects" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <AdminProjects />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/participants" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <AdminParticipants />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/submissions" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <AdminSubmissions />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/settings" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <AdminSettings />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/register-team" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <TeamRegistration />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/hackathons" element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <HackathonManagement />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
 
-                {/* Participant Routes */}
-                <Route path="/app" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <ParticipantHome />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/app/projects" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Projects />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/app/teams" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Teams />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/app/submissions" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Submissions />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/app/profile" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <ProfilePage />
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/app/profile/edit" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <EditProfilePage />
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/join-hackathon" element={
-                  <ProtectedRoute requiredRole="participant">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <JoinHackathon />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
+                  {/* Participant Routes */}
+                  <Route path="/app" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <ParticipantHome />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/projects" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <Projects />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/teams" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <Teams />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/submissions" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <Submissions />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/profile" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <ProfilePage />
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/profile/edit" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <EditProfilePage />
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/join-hackathon" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <JoinHackathon />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/create-team/:hackathonId" element={
+                    <ProtectedRoute requiredRole="participant">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <CreateTeam />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
 
-                {/* Judge Routes */}
-                <Route path="/judge" element={
-                  <ProtectedRoute requiredRole="judge">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <JudgeHome />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/judge/queue" element={
-                  <ProtectedRoute requiredRole="judge">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <JudgeQueue />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/judge/scores" element={
-                  <ProtectedRoute requiredRole="judge">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <JudgeScores />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/judge/manual-review" element={
-                  <ProtectedRoute requiredRole="judge">
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <ManualReview />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
+                  {/* Judge Routes */}
+                  <Route path="/judge" element={
+                    <ProtectedRoute requiredRole="judge">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <JudgeHome />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/judge/queue" element={
+                    <ProtectedRoute requiredRole="judge">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <JudgeQueue />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/judge/scores" element={
+                    <ProtectedRoute requiredRole="judge">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <JudgeScores />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/judge/manual-review" element={
+                    <ProtectedRoute requiredRole="judge">
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <ManualReview />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
 
-                {/* Shared Protected Routes */}
-                <Route path="/logs" element={
-                  <ProtectedRoute>
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Logs />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-                <Route path="/hacka-agent" element={
-                  <ProtectedRoute>
-                    <AuthenticatedLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <HackaAgent />
-                      </Suspense>
-                    </AuthenticatedLayout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
-          
-          
-             <HealthWidget />
-             <KeyboardShortcutsModal />
-           </BackgroundProvider>
-         </ToastProvider>
-       </AuthProvider>
-     </ThemeProvider>
-   </ErrorBoundary>
+                  {/* Shared Protected Routes */}
+                  <Route path="/logs" element={
+                    <ProtectedRoute>
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <Logs />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/hacka-agent" element={
+                    <ProtectedRoute>
+                      <AuthenticatedLayout>
+                        <Suspense fallback={<PageLoader />}>
+                          <HackaAgent />
+                        </Suspense>
+                      </AuthenticatedLayout>
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+            
+            
+                 <HealthWidget />
+                 <KeyboardShortcutsModal />
+               </BackgroundProvider>
+             </ToastProvider>
+           </SyncProvider>
+         </AuthProvider>
+       </ThemeProvider>
+     </ErrorBoundary>
   )
 }
 

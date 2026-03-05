@@ -34,13 +34,18 @@ const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
             : 'gap-3 px-3'
         } ${
           active 
-            ? 'text-white bg-white/10 border border-white/20' 
-            : 'text-white/80 hover:text-white hover:bg-white/10'
+            ? 'border' 
+            : 'hover:bg-white/10 dark:hover:bg-white/10'
         }`}
+        style={{
+          color: 'var(--text-primary)',
+          background: active ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+          borderColor: active ? 'rgba(var(--neon-cyan-rgb, 45, 183, 209), 0.3)' : 'transparent'
+        }}
         aria-current={active ? 'page' : undefined}
       >
         {active && (
-          <div className="absolute left-[-2px] top-2 bottom-2 w-[3px] bg-[#4AA8FF] rounded-r-sm"></div>
+          <div className="absolute left-[-2px] top-2 bottom-2 w-[3px] rounded-r-sm" style={{ background: 'var(--neon-cyan)' }}></div>
         )}
         
         <div className="relative flex items-center justify-center">
@@ -54,7 +59,7 @@ const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
           <>
             <span className="flex-1">{item.label}</span>
             {item.badge && (
-              <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+              <span className="ml-auto text-[11px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-secondary)' }}>
                 {item.badge}
               </span>
             )}
@@ -71,9 +76,9 @@ const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
   };
 
   return (
-    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-white/5 transition-all duration-300 z-30 ${
+    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] border-r transition-all duration-300 z-30 ${
       isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    }`} style={{ borderColor: 'rgba(var(--neon-cyan-rgb, 45, 183, 209), 0.2)', background: 'rgba(var(--bg-gradient-start-rgb, 13, 17, 40), 0.5)' }}>
       {/* Navigation */}
       <nav className="py-6 px-3 overflow-y-auto flex-1" role="navigation" aria-label="Primary">
         <div className="space-y-2">
@@ -84,12 +89,13 @@ const Sidebar = ({ items, isCollapsed, onToggleCollapse }) => {
       </nav>
 
       {/* Logout Button at Bottom */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3" style={{ borderTop: '1px solid rgba(var(--neon-cyan-rgb, 45, 183, 209), 0.2)' }}>
         <button
           onClick={logout}
           className={`group flex items-center h-11 rounded-xl transition-all w-full ${
             isCollapsed ? 'justify-center' : 'gap-3 px-3'
-          } text-white/80 hover:text-white hover:bg-red-500/20`}
+          }`}
+          style={{ color: 'var(--text-primary)' }}
           aria-label="Logout"
         >
           <div className="relative flex items-center justify-center">
