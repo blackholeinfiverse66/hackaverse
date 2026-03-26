@@ -18,6 +18,7 @@ export const SyncProvider = ({ children }) => {
     projects: [],
     submissions: [],
     activities: [],
+    events: [],
     lastUpdate: null
   });
 
@@ -26,18 +27,18 @@ export const SyncProvider = ({ children }) => {
       const headers = { 'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778' };
 
       const [teamsRes, hackathonsRes, submissionsRes, activitiesRes] = await Promise.all([
-        fetch('http://localhost:8000/teams/list', { headers }),
-        fetch('http://localhost:8000/hackathons', { headers }),
-        fetch('http://localhost:8000/submissions', { headers }),
-        fetch('http://localhost:8000/admin/activities/recent?limit=50', { headers })
+        fetch('http://127.0.0.1:8000/teams/list', { headers }).catch(() => null),
+        fetch('http://127.0.0.1:8000/api/hackathons', { headers }).catch(() => null),
+        fetch('http://127.0.0.1:8000/submissions', { headers }).catch(() => null),
+        fetch('http://127.0.0.1:8000/api/admin/dashboard', { headers }).catch(() => null)
       ]);
 
-      const teams = (await teamsRes.json()).data || [];
-      const hackathons = (await hackathonsRes.json()).data || [];
-      const submissions = (await submissionsRes.json()).data || [];
-      const activities = (await activitiesRes.json()).data || [];
+      const teams = teamsRes ? (await teamsRes.json()).data || [] : [];
+      const hackathons = hackathonsRes ? (await hackathonsRes.json()).data || [] : [];
+      const submissions = submissionsRes ? (await submissionsRes.json()).data || [] : [];
+      const dashboardData = activitiesRes ? (await activitiesRes.json()).data || {} : {};
+      const activities = dashboardData.recentActivities || [];
 
-      // Extract participants from teams
       const participantsMap = new Map();
       teams.forEach(team => {
         const members = team.members || [];
@@ -58,6 +59,7 @@ export const SyncProvider = ({ children }) => {
         hackathons,
         submissions,
         activities,
+        events: activities,
         participants: Array.from(participantsMap.values()),
         lastUpdate: new Date().toISOString()
       });
@@ -68,7 +70,7 @@ export const SyncProvider = ({ children }) => {
 
   useEffect(() => {
     fetchAllData();
-    const interval = setInterval(fetchAllData, 3000);
+    const interval = setInterval(fetchAllData, 10000);
     return () => clearInterval(interval);
   }, [fetchAllData]);
 
@@ -78,6 +80,7 @@ export const SyncProvider = ({ children }) => {
     hackathons: syncData.hackathons,
     submissions: syncData.submissions,
     activities: syncData.activities,
+    events: syncData.events,
     participants: syncData.participants
   };
 

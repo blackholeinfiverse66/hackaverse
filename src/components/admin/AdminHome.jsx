@@ -3,14 +3,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSyncContext } from '../../contexts/SyncContext';
 import { useNavigate } from 'react-router-dom';
 import AnnouncementModal from './AnnouncementModal';
+import InviteJudgeModal from './InviteJudgeModal';
 import { useToast, ToastContainer } from '../../hooks/useToast.jsx';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { apiService } from '../../services/api';
 
 const AdminHome = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { teams, hackathons, submissions, activities } = useSyncContext();
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [isInviteJudgeModalOpen, setIsInviteJudgeModalOpen] = useState(false);
   const { toasts, success, error: showError } = useToast();
 
   const [kpis, setKpis] = useState({
@@ -20,24 +23,46 @@ const AdminHome = () => {
     activeTeams: 0,
     deltas: { participants: '+0', projects: '+0', submissions: '+0', teams: '+0' }
   });
+  const [remoteActivities, setRemoteActivities] = useState([]);
+
+  const fetchDashboardData = async () => {
+    try {
+      console.log('[AdminDashboard] Fetching dashboard data from API...');
+      const res = await apiService.admin.getDashboard();
+      console.log('[AdminDashboard] API Response:', res);
+      
+      if (res.data && res.data.data) {
+        const dashboardData = res.data.data;
+        console.log('[AdminDashboard] Dashboard data:', dashboardData);
+        
+        setKpis({
+          totalParticipants: dashboardData.totalParticipants || 0,
+          activeProjects: dashboardData.activeProjects || 0,
+          submissions: dashboardData.submissions || 0,
+          activeTeams: dashboardData.activeTeams || 0,
+          deltas: dashboardData.deltas || { participants: '+0', projects: '+0', submissions: '+0', teams: '+0' }
+        });
+        
+        setRemoteActivities(dashboardData.recentActivities || []);
+        console.log('[AdminDashboard] KPIs updated successfully');
+      } else {
+        console.warn('[AdminDashboard] No data in response:', res);
+      }
+    } catch (err) {
+      console.error('[AdminDashboard] Error fetching dashboard data:', err);
+      console.error('[AdminDashboard] Error details:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+    }
+  };
 
   useEffect(() => {
-    const uniqueParticipants = new Set();
-    teams.forEach(team => {
-      team.members?.forEach(member => {
-        const memberId = typeof member === 'object' ? member.user_id : member;
-        uniqueParticipants.add(memberId);
-      });
-    });
-
-    setKpis({
-      totalParticipants: uniqueParticipants.size,
-      activeProjects: submissions.length,
-      submissions: submissions.length,
-      activeTeams: teams.length,
-      deltas: { participants: '+0', projects: '+0', submissions: '+0', teams: '+0' }
-    });
-  }, [teams, submissions]);
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getActivityIcon = (type) => {
     const icons = {
@@ -113,6 +138,7 @@ const AdminHome = () => {
             <button
               className="btn-secondary h-11 w-11 flex items-center justify-center"
               title="Refresh"
+              onClick={fetchDashboardData}
             >
               <i className="uil uil-refresh"></i>
             </button>
@@ -160,14 +186,14 @@ const AdminHome = () => {
               </button>
             </div>
             <div className="divide-y divide-white/5">
-              {activities.length === 0 ? (
+              {remoteActivities.length === 0 ? (
                 <div className="p-12 text-center">
                   <i className="uil uil-clipboard-notes text-4xl text-text-muted mb-4"></i>
                   <h3 className="text-lg font-semibold text-white mb-2">No recent activity</h3>
                   <p className="text-text-muted">Activity will appear here as events occur</p>
                 </div>
               ) : (
-                activities.slice(0, 10).map(activity => (
+                remoteActivities.slice(0, 10).map(activity => (
                   <div key={activity._id || activity.id} className="p-5 hover:bg-white/5 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 bg-cyan/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -241,7 +267,7 @@ const AdminHome = () => {
                 </button>
                 <button
                   className="w-full text-left p-3 hover:bg-white/5 rounded-xl transition-colors flex items-center gap-3"
-                  onClick={() => navigate('/admin/settings')}
+                  onClick={() => setIsInviteJudgeModalOpen(true)}
                 >
                   <i className="uil uil-user-check text-cyan text-xl"></i>
                   <div>
@@ -282,6 +308,12 @@ const AdminHome = () => {
         onSend={(data) => {
           console.log('Sending announcement:', data);
         }}
+      />
+
+      {/* Invite Judge Modal */}
+      <InviteJudgeModal
+        isOpen={isInviteJudgeModalOpen}
+        onClose={() => setIsInviteJudgeModalOpen(false)}
       />
 
       <ToastContainer toasts={toasts} />

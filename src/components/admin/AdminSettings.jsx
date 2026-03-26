@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import InviteJudgeModal from './InviteJudgeModal';
 
 const AdminSettings = () => {
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [hasChanges, setHasChanges] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isInviteJudgeModalOpen, setIsInviteJudgeModalOpen] = useState(false);
 
   const [generalSettings, setGeneralSettings] = useState({
     eventName: 'HackaVerse 2025',
@@ -226,7 +228,7 @@ const AdminSettings = () => {
                 >
                   Import CSV
                 </button>
-                <button className="btn-primary h-10 px-4 text-sm">Invite Judge</button>
+                <button className="btn-primary h-10 px-4 text-sm" onClick={() => setIsInviteJudgeModalOpen(true)}>Invite Judge</button>
               </div>
             </div>
             <div className="glass-card rounded-2xl border overflow-hidden">
@@ -510,6 +512,8 @@ const AdminSettings = () => {
           Settings saved successfully!
         </div>
       )}
+
+      <InviteJudgeModal isOpen={isInviteJudgeModalOpen} onClose={() => setIsInviteJudgeModalOpen(false)} />
       </div>
     </div>
   );

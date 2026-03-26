@@ -6,5 +6,27 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true
+      }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui': ['axios']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    sourcemap: false,
+    reportCompressedSize: false
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'axios']
   }
 })

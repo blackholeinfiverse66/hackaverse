@@ -26,7 +26,7 @@ const HackaAgent = () => {
   useEffect(() => {
     const wakeUpBackend = async () => {
       try {
-        await fetch('https://ai-agent-x2iw.onrender.com/ping', {
+        await fetch('http://127.0.0.1:8000/ping', {
           headers: { 'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778' }
         });
       } catch (e) {
@@ -45,66 +45,67 @@ const HackaAgent = () => {
       timestamp: new Date()
     };
 
-      const userInput = inputMessage;
-      setMessages(prev => [...prev, userMessage]);
-      setInputMessage('');
-      setIsLoading(true);
-      setIsTyping(true);
+    const userInput = inputMessage;
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+    setIsTyping(true);
 
-      try {
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-        const teamId = userData.team_id || userData.id || 'guest_user';
+    try {
+      console.log('[HackaAgent Frontend] Sending message:', userInput);
+      
+      const response = await apiService.agent.sendMessage({
+        question: userInput
+      });
 
-        const response = await apiService.agent.sendMessage({
-          prompt: userInput,
-          team_id: teamId,
-          tenant_id: 'default',
-          event_id: 'default_event',
-          metadata: {
-            timestamp: new Date().toISOString(),
-            source: 'hackaagent_ui'
-          }
-        });
+      console.log('[HackaAgent Frontend] Response received:', response);
+      console.log('[HackaAgent Frontend] Response data:', response.data);
 
-        const aiMessage = {
-          type: 'ai',
-          content: response.data?.result || response.data?.data?.result || 'I\'m sorry, I couldn\'t process your request right now. Please try again.',
-          timestamp: new Date()
-        };
+      const aiMessage = {
+        type: 'ai',
+        content: response.data?.response || response.data?.result || response.data?.data?.result || 'I\'m sorry, I couldn\'t process your request right now. Please try again.',
+        timestamp: new Date()
+      };
 
-        setMessages(prev => [...prev, aiMessage]);
-      } catch (error) {
-        console.error('Full error:', error);
-        console.error('Error response:', error.response?.data);
-        
-        let errorMsg = 'An error occurred. Please try again.';
-        
-        if (!error.response) {
-          errorMsg = 'Backend is waking up (30-60s). Please try again.';
-        } else if (error.response?.status === 401) {
-          errorMsg = 'Authentication error. Please check API key.';
-        } else if (error.response?.status === 422) {
-          const detail = error.response?.data?.detail;
-          if (Array.isArray(detail)) {
-            errorMsg = `Validation error: ${detail.map(d => d.msg).join(', ')}`;
-          } else {
-            errorMsg = `Validation error: ${detail || 'Invalid request format'}`;
-          }
-        } else if (error.response?.data?.detail) {
-          errorMsg = error.response.data.detail;
-        } else if (error.userMessage) {
-          errorMsg = error.userMessage;
+      console.log('[HackaAgent Frontend] AI message:', aiMessage);
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('[HackaAgent Frontend] Full error:', error);
+      console.error('[HackaAgent Frontend] Error response:', error.response?.data);
+      console.error('[HackaAgent Frontend] Error status:', error.response?.status);
+      console.error('[HackaAgent Frontend] Error message:', error.message);
+      
+      let errorMsg = 'An error occurred. Please try again.';
+      
+      if (!error.response) {
+        errorMsg = `Network error: ${error.message}. Make sure backend is running at http://127.0.0.1:8000`;
+      } else if (error.response?.status === 404) {
+        errorMsg = 'API endpoint not found. Backend route may not be registered.';
+      } else if (error.response?.status === 401) {
+        errorMsg = 'Authentication error. Please check API key.';
+      } else if (error.response?.status === 422) {
+        const detail = error.response?.data?.detail;
+        if (Array.isArray(detail)) {
+          errorMsg = `Validation error: ${detail.map(d => d.msg).join(', ')}`;
+        } else {
+          errorMsg = `Validation error: ${detail || 'Invalid request format'}`;
         }
-        
-        setMessages(prev => [...prev, {
-          type: 'ai',
-          content: errorMsg,
-          timestamp: new Date()
-        }]);
-      } finally {
-        setIsLoading(false);
-        setIsTyping(false);
+      } else if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.userMessage) {
+        errorMsg = error.userMessage;
       }
+      
+      console.error('[HackaAgent Frontend] Final error message:', errorMsg);
+      setMessages(prev => [...prev, {
+        type: 'ai',
+        content: errorMsg,
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e) => {

@@ -32,7 +32,7 @@ export default function HackathonManagement() {
   const fetchHackathons = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/hackathons`, {
+      const response = await fetch(`${API_BASE_URL}/api/hackathons`, {
         headers: { 
           'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
         }
@@ -69,7 +69,7 @@ export default function HackathonManagement() {
 
   const confirmDelete = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/hackathons/${confirmDialog.hackathonId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/hackathons/${confirmDialog.hackathonId}`, {
         method: 'DELETE',
         headers: { 
           'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
@@ -114,8 +114,7 @@ export default function HackathonManagement() {
       setLoading(true);
       
       if (editingHackathon) {
-        // Update existing hackathon
-        const response = await fetch(`${API_BASE_URL}/hackathons/${editingHackathon.id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/hackathons/${editingHackathon.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -132,8 +131,7 @@ export default function HackathonManagement() {
           showError('Failed to update hackathon');
         }
       } else {
-        // Create new hackathon
-        const response = await fetch(`${API_BASE_URL}/hackathons`, {
+        const response = await fetch(`${API_BASE_URL}/api/hackathons`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -170,7 +168,7 @@ export default function HackathonManagement() {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/hackathons/${confirmDialog.hackathonId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/hackathons/${confirmDialog.hackathonId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -261,7 +259,6 @@ export default function HackathonManagement() {
       </div>
       <ToastContainer toasts={toasts} />
 
-      {/* Create/Edit Hackathon Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
           <div className="bg-slate-900 dark:bg-slate-900 rounded-xl shadow-2xl w-[700px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>

@@ -20,7 +20,7 @@ const ParticipantHome = () => {
 
   const fetchHackathons = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/hackathons/public`, {
+      const response = await fetch(`${API_BASE_URL}/hackathons/active`, {
         headers: { 
           'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
         }
@@ -226,12 +226,12 @@ const ParticipantHome = () => {
               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Browse all teams</div>
             </button>
             <button
-              onClick={() => navigate('/app/projects')}
+              onClick={() => navigate('/app/submissions')}
               className="p-4 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-left"
             >
-              <i className="uil uil-rocket text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
-              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Projects</div>
-              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>View all projects</div>
+              <i className="uil uil-file-upload-alt text-xl mb-2 block" style={{ color: 'var(--neon-cyan)' }}></i>
+              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Submissions</div>
+              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>View all submissions</div>
             </button>
             <button
               onClick={() => navigate('/leaderboard')}

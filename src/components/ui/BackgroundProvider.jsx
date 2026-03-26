@@ -48,15 +48,15 @@ const BackgroundProvider = ({ children, useStarfield = true, useGradient = true 
 
   return (
     <>
-      {/* Starfield background (if enabled) */}
-      {useStarfield && backgroundThemes[backgroundType]?.starfield && <Starfield />}
-
-      {/* Gradient overlay for consistent styling */}
-      {useGradient && (
-        <div className="fixed inset-0 pointer-events-none z-[-2]" style={{
-          background: backgroundThemes[backgroundType]?.gradient || backgroundThemes.default.gradient,
-          opacity: 0.8
-        }} />
+      {/* Starfield background (if enabled) - or gradient-only for performance */}
+      {useStarfield && backgroundThemes[backgroundType]?.starfield ? (
+        <Starfield />
+      ) : (
+        useGradient && (
+          <div className="fixed inset-0 pointer-events-none z-[-2]" style={{
+            background: backgroundThemes[backgroundType]?.gradient || backgroundThemes.default.gradient,
+          }} />
+        )
       )}
 
       {/* Main content */}

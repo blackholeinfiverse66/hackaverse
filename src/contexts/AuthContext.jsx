@@ -38,75 +38,83 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    // Use mock login (backend auth not implemented)
-    const mockUsers = {
-      'admin@hackaverse.com': { 
-        id: 1, 
-        email: 'admin@hackaverse.com', 
-        name: 'Admin User', 
-        role: 'admin',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
-      },
-      'participant@hackaverse.com': { 
-        id: 2, 
-        email: 'participant@hackaverse.com', 
-        name: 'John Participant', 
-        role: 'participant',
-        team_id: 'team_participant',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=participant'
-      },
-      'judge@hackaverse.com': { 
-        id: 3, 
-        email: 'judge@hackaverse.com', 
-        name: 'Judge Smith', 
-        role: 'judge',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=judge'
-      }
-    };
-
-    const userData = mockUsers[email];
-    if (userData && password === 'password123') {
-      const token = 'mock-jwt-token-' + Date.now();
+    try {
+      const response = await apiService.auth.login({ email, password });
       
-      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      const { access_token, refresh_token, user } = response.data;
+      
+      // Store tokens and user data
+      localStorage.setItem(AUTH_TOKEN_KEY, access_token);
+      localStorage.setItem('refreshToken', refresh_token);
+      
+      // Add avatar if not present
+      const userData = {
+        ...user,
+        avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`
+      };
+      
       localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
       
       setUser(userData);
       setIsAuthenticated(true);
       
       return { success: true, user: userData };
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || error.message || 'Login failed');
+    }
+  };
+
+  const signup = async (name, email, password, role = 'participant') => {
+    try {
+      const response = await apiService.auth.register({ 
+        name, 
+        email, 
+        password,
+        role
+      });
+      
+      const { access_token, refresh_token, user } = response.data;
+      
+      // Store tokens and user data
+      localStorage.setItem(AUTH_TOKEN_KEY, access_token);
+      localStorage.setItem('refreshToken', refresh_token);
+      
+      // Add avatar if not present
+      const userData = {
+        ...user,
+        avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`
+      };
+      
+      localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+      
+      setUser(userData);
+      setIsAuthenticated(true);
+      
+      return { success: true, user: userData };
+    } catch (error) {
+      throw new Error(error.response?.data?.detail || error.message || 'Registration failed');
+    }
+  };
+
+  const logout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await apiService.auth.logout();
+      }
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.error('Logout API error:', error);
     }
     
-    throw new Error('Invalid email or password');
-  };
-
-  const signup = async (name, email, password) => {
-    // Use mock signup (backend auth not implemented)
-    const userData = {
-      id: Date.now(),
-      email,
-      name,
-      role: 'participant',
-      team_id: 'team_' + Date.now(),
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-    };
-
-    const token = 'mock-jwt-token-' + Date.now();
-    
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-    
-    setUser(userData);
-    setIsAuthenticated(true);
-    
-    return { success: true, user: userData };
-  };
-
-  const logout = () => {
+    // Clear local storage
     localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem(USER_DATA_KEY);
+    
     setUser(null);
     setIsAuthenticated(false);
+    
     // Navigate to home page after logout
     window.location.href = '/';
   };

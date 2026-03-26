@@ -12,7 +12,6 @@ const AuthenticatedLayout = ({ children }) => {
   const adminSidebarItems = [
     { icon: 'uil-dashboard', label: 'Dashboard', path: '/admin' },
     { icon: 'uil-calendar-alt', label: 'Hackathons', path: '/admin/hackathons' },
-    { icon: 'uil-rocket', label: 'Projects', path: '/admin/projects' },
     { icon: 'uil-users-alt', label: 'Participants', path: '/admin/participants' },
     { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
     { icon: 'uil-cog', label: 'Settings', path: '/admin/settings' }
@@ -22,7 +21,6 @@ const AuthenticatedLayout = ({ children }) => {
     { icon: 'uil-home', label: 'Home', path: '/app' },
     { icon: 'uil-calendar-alt', label: 'Join Hackathon', path: '/join-hackathon' },
     { icon: 'uil-users-alt', label: 'My Team', path: '/app/teams' },
-    { icon: 'uil-rocket', label: 'Projects', path: '/app/projects' },
     { icon: 'uil-file-upload-alt', label: 'Submissions', path: '/app/submissions' },
     { icon: 'uil-robot', label: 'HackaAgent', path: '/hacka-agent' },
     { icon: 'uil-user-circle', label: 'Profile', path: '/app/profile' }

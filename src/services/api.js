@@ -137,40 +137,45 @@ export const apiService = {
       if (!credentials.email || !credentials.password) {
         return Promise.reject(new Error('Email and password are required'));
       }
-      return api.post('/api/auth/login', credentials);
+      return api.post('/auth/login', credentials);
     },
     register: (userData) => {
       const validationErrors = validateUserData(userData);
       if (validationErrors) {
         return Promise.reject(new Error(validationErrors.join(', ')));
       }
-      return api.post('/register', userData);
+      return api.post('/auth/register', userData);
     },
-    logout: () => api.post('/api/auth/logout'),
-    refreshToken: () => api.post('/api/auth/refresh'),
+    logout: () => {
+      const refreshToken = localStorage.getItem('refreshToken');
+      return api.post('/auth/logout', { refresh_token: refreshToken });
+    },
+    refreshToken: () => {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        return Promise.reject(new Error('No refresh token available'));
+      }
+      return api.post('/auth/refresh', { refresh_token: refreshToken });
+    },
   },
 
   // Agent endpoints
   agent: {
     sendMessage: (data) => {
-      if (!data.prompt || data.prompt.trim().length === 0) {
+      if (!data.question || data.question.trim().length === 0) {
         return Promise.reject(new Error('Message cannot be empty'));
       }
-      const payload = {
-        team_id: String(data.team_id || 'default_team'),
-        prompt: String(data.prompt || data.message),
-        metadata: data.metadata || {},
-        tenant_id: String(data.tenant_id || 'default'),
-        event_id: String(data.event_id || 'default_event')
-      };
-      return api.post('/agent', payload);
+      return api.post('/ai/hacka-agent', { question: data.question });
     },
-    getHistory: (teamId) => Promise.resolve({ data: [] }),
+    getHistory: (teamId) => api.get(`/agent/history/${teamId}`).catch(() => Promise.resolve({ data: [] })),
   },
 
   // Admin endpoints
   admin: {
-    getRewards: () => Promise.resolve({ data: [] }),
+    inviteJudge: (email) => api.post('/api/admin/invite-judge', { email, role: 'Judge' }),
+    inviteParticipant: (email, hackathonId) => api.post('/api/admin/invite-participant', { email, hackathonId }),
+    getDashboard: () => api.get('/api/admin/dashboard'),
+    getRewards: () => api.get('/reward').catch(() => Promise.resolve({ data: [] })),
     applyReward: (data) => {
       const validationErrors = validateRewardData(data);
       if (validationErrors) {
@@ -185,25 +190,25 @@ export const apiService = {
       return api.get('/system/logs', { params });
     },
     registerTeam: (data) => api.post('/registration', data),
-    getTeams: () => Promise.resolve({ data: [] }),
-    getProjects: () => Promise.resolve({ data: [] }),
-    getSubmissions: () => Promise.resolve({ data: [] }),
-    getParticipants: () => Promise.resolve({ data: [] }),
+    getTeams: () => api.get('/teams/list'),
+    getProjects: () => api.get('/projects'),
+    getSubmissions: () => api.get('/submissions'),
+    getParticipants: () => api.get('/api/hackathons/{id}/participants').catch(() => Promise.resolve({ data: [] })),
   },
 
   // Hackathon endpoints
   hackathons: {
-    getAll: () => api.get('/hackathons'),
-    getActive: () => api.get('/hackathons/public'),
-    create: (data) => api.post('/hackathons', data),
-    update: (id, data) => api.patch(`/hackathons/${id}`, data),
-    join: (data) => api.post('/hackathons/join', data),
+    getAll: () => api.get('/api/hackathons'),
+    getActive: () => api.get('/api/hackathons'),
+    create: (data) => api.post('/api/hackathons', data),
+    update: (id, data) => api.patch(`/api/hackathons/${id}`, data),
+    join: (data) => api.post('/api/hackathons/join', data),
   },
 
   // System endpoints
   system: {
-    health: () => api.get('/system/health'),
-    status: () => api.get('/system/ready'),
+    health: () => api.get('/health'),
+    status: () => api.get('/ready'),
   },
 
   // Teams
@@ -211,25 +216,21 @@ export const apiService = {
     getAll: () => api.get('/teams/list'),
     getById: (id) => api.get(`/teams/${id}`),
     create: (data) => api.post('/teams/create', data),
-    update: (id, data) => Promise.resolve({ data: null }),
-    delete: (id) => Promise.resolve({ data: null }),
-    join: (id) => Promise.resolve({ data: null }),
-    leave: (id) => Promise.resolve({ data: null }),
+    update: (id, data) => api.patch(`/teams/${id}`, data).catch(() => Promise.resolve({ data: null })),
+    delete: (id) => api.delete(`/teams/${id}`).catch(() => Promise.resolve({ data: null })),
+    join: (id) => api.post(`/teams/${id}/join`, {}).catch(() => Promise.resolve({ data: null })),
+    leave: (id) => api.post(`/teams/${id}/leave`, {}).catch(() => Promise.resolve({ data: null })),
     sendInvitation: (data) => api.post('/teams/invitations/send', data),
+    acceptInvitation: (token) => api.post('/teams/invitations/accept', { token }),
+    acceptInvitationWithDetails: (data) => api.post('/teams/invitations/accept-with-details', data),
+    getInvitationDetails: (token) => api.get(`/teams/invitations/${token}`),
     getReceivedInvitations: () => api.get('/teams/invitations/received'),
     getSentInvitations: () => api.get('/teams/invitations/sent'),
     respondToInvitation: (data) => api.post('/teams/invitations/respond', data),
-  },
-
-  // Projects
-  projects: {
-    getAll: () => api.get('/projects'),
-    getById: (id) => api.get(`/projects/${id}`),
-    create: (data) => api.post('/projects', data),
-    update: (id, data) => Promise.resolve({ data: null }),
-    delete: (id) => Promise.resolve({ data: null }),
-    submit: (data) => api.post('/projects/submit', data),
-    getByTeam: (teamId) => api.get(`/projects/team/${teamId}`),
+    updateTeamMember: (data) => api.put('/teams/members/update', data),
+    updateTeamDetails: (data) => api.put('/teams/update-details', data),
+    getTeamDetails: (teamId) => api.get(`/teams/${teamId}/details`),
+    getTeamMembers: (teamId) => api.get(`/teams/${teamId}/members`),
   },
 
   // Submissions
@@ -237,15 +238,15 @@ export const apiService = {
     getAll: () => api.get('/submissions'),
     getById: (id) => api.get(`/submissions/${id}`),
     getByTeam: (teamId) => api.get(`/submissions/team/${teamId}`),
-    create: (data) => Promise.resolve({ data: null }),
-    update: (id, data) => Promise.resolve({ data: null }),
+    create: (data) => api.post('/submissions', data),
+    update: (id, data) => api.patch(`/submissions/${id}`, data).catch(() => Promise.resolve({ data: null })),
   },
 
   // Leaderboard
   leaderboard: {
-    get: (params = {}) => {
-      const { tenant_id = 'default', event_id = 'default_event', limit = 50 } = params;
-      return api.get('/judge/rank', { params: { tenant_id, event_id, limit } });
+    get: (hackathonId, params = {}) => {
+      const { limit = 50 } = params;
+      return api.get(`/api/hackathons/${hackathonId}/leaderboard`, { params: { limit } });
     },
     getByTrack: (track) => Promise.resolve({ data: [] }),
   },
@@ -298,13 +299,14 @@ export const apiService = {
     },
     getPendingSubmissions: () => api.get('/judge/submissions/pending'),
     submitReview: (data) => api.post('/judge/review/submit', data),
+    getScores: (projectId) => api.get(`/judging/scores/${projectId}`),
   },
 
-  // User profile (stub - not implemented in backend)
+  // User profile
   user: {
-    getProfile: () => Promise.resolve({ data: null }),
-    updateProfile: (data) => Promise.resolve({ data: null }),
-    getStats: () => Promise.resolve({ data: null }),
+    getProfile: () => api.get('/auth/me').catch(() => Promise.resolve({ data: null })),
+    updateProfile: (data) => api.patch('/user/profile', data).catch(() => Promise.resolve({ data: null })),
+    getStats: () => api.get('/user/stats').catch(() => Promise.resolve({ data: null })),
   },
 
   // Notifications

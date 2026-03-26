@@ -49,9 +49,9 @@ const StartProjectWizard = ({ isOpen, onClose }) => {
 
   const handleSubmit = () => {
     // Here you would typically send the data to your backend
-    console.log('Creating project:', projectData);
-    // For now, just navigate to projects page
-    navigate('/app/projects');
+    console.log('Creating submission:', projectData);
+    // For now, route to submissions page
+    navigate('/app/submissions');
     onClose();
   };
 

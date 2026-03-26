@@ -1,13 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiService } from '../../services/api';
+import { useToast } from '../../hooks/useToast';
 
 const InviteParticipantModal = ({ isOpen, onClose, onSend }) => {
   const [formData, setFormData] = useState({
     email: '',
     name: '',
-    role: 'participant',
+    hackathon: '',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [hackathons, setHackathons] = useState([]);
+  const { success, error: showError } = useToast();
+
+  useEffect(() => {
+    const fetchHackathons = async () => {
+      try {
+        const response = await apiService.hackathons.getAll();
+        if (response.data && Array.isArray(response.data)) {
+          setHackathons(response.data);
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          setHackathons(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch hackathons:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchHackathons();
+    }
+  }, [isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -15,23 +39,45 @@ const InviteParticipantModal = ({ isOpen, onClose, onSend }) => {
       ...prev,
       [name]: value
     }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Valid email is required';
+    }
+    if (!formData.name || formData.name.trim().length < 2) {
+      newErrors.name = 'Name is required';
+    }
+    if (!formData.hackathon) {
+      newErrors.hackathon = 'Hackathon selection is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) return;
+    
     setIsSubmitting(true);
-
     try {
-      await onSend(formData);
+      await apiService.admin.inviteParticipant(formData.email, formData.hackathon);
+      success('Invitation sent successfully!');
       setFormData({
         email: '',
         name: '',
-        role: 'participant',
+        hackathon: '',
         message: ''
       });
       onClose();
+      if (onSend) onSend(formData);
     } catch (error) {
-      console.error('Failed to send invitation:', error);
+      showError(error.message || 'Failed to send invitation');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,9 +113,12 @@ const InviteParticipantModal = ({ isOpen, onClose, onSend }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors"
+              className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white placeholder-white/40 focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors ${
+                errors.name ? 'border-red-500' : 'border-white/10'
+              }`}
               placeholder="Enter participant's full name"
             />
+            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
           </div>
 
           <div>
@@ -83,26 +132,36 @@ const InviteParticipantModal = ({ isOpen, onClose, onSend }) => {
               value={formData.email}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/40 focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors"
+              className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white placeholder-white/40 focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors ${
+                errors.email ? 'border-red-500' : 'border-white/10'
+              }`}
               placeholder="Enter email address"
             />
+            {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
           </div>
 
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-white mb-2">
-              Role
+            <label htmlFor="hackathon" className="block text-sm font-medium text-white mb-2">
+              Hackathon *
             </label>
             <select
-              id="role"
-              name="role"
-              value={formData.role}
+              id="hackathon"
+              name="hackathon"
+              value={formData.hackathon}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors"
+              required
+              className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white focus:border-cyan focus:ring-2 focus:ring-cyan/40 transition-colors ${
+                errors.hackathon ? 'border-red-500' : 'border-white/10'
+              }`}
             >
-              <option value="participant">Participant</option>
-              <option value="mentor">Mentor</option>
-              <option value="judge">Judge</option>
+              <option value="">Select a hackathon</option>
+              {hackathons.map(h => (
+                <option key={h.id} value={h.id}>
+                  {h.name || h.title}
+                </option>
+              ))}
             </select>
+            {errors.hackathon && <p className="text-red-400 text-xs mt-1">{errors.hackathon}</p>}
           </div>
 
           <div>

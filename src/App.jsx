@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import { ToastProvider } from './components/ui/Toast'
 import { SyncProvider } from './contexts/SyncContext'
 import BackgroundProvider from './components/ui/BackgroundProvider'
@@ -13,13 +14,12 @@ import AuthenticatedLayout from './components/layout/AuthenticatedLayout'
 
 // Lazy load components for better initial load time
 const AdminHome = lazy(() => import('./components/admin/AdminHome'))
-const AdminProjects = lazy(() => import('./components/admin/AdminProjects'))
 const AdminParticipants = lazy(() => import('./components/admin/AdminParticipants'))
 const AdminSubmissions = lazy(() => import('./components/admin/AdminSubmissions'))
 const AdminSettings = lazy(() => import('./components/admin/AdminSettings'))
 const ParticipantHome = lazy(() => import('./components/participant/ParticipantHome'))
-import ProfilePage from './components/participant/SimpleProfilePage'
-import EditProfilePage from './components/participant/EditProfilePage'
+const ProfilePage = lazy(() => import('./components/participant/SimpleProfilePage'))
+const EditProfilePage = lazy(() => import('./components/participant/EditProfilePage'))
 const JudgeHome = lazy(() => import('./components/judge/JudgeHome'))
 const JudgeQueue = lazy(() => import('./components/judge/JudgeQueue'))
 const JudgeScores = lazy(() => import('./components/judge/JudgeScores'))
@@ -37,6 +37,7 @@ const JoinHackathon = lazy(() => import('./components/pages/JoinHackathon'))
 const ManualReview = lazy(() => import('./components/judge/ManualReview'))
 const Logs = lazy(() => import('./components/pages/Logs'))
 const CreateTeam = lazy(() => import('./components/pages/CreateTeam'))
+const AcceptInvitation = lazy(() => import('./components/pages/AcceptInvitation'))
 import HealthWidget from './components/ui/HealthWidget'
 import KeyboardShortcutsModal from './components/ui/KeyboardShortcutsModal'
 
@@ -55,13 +56,23 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <SyncProvider>
-            <ToastProvider>
-              <BackgroundProvider useStarfield={true} useGradient={true}>
+          <NotificationProvider>
+            <SyncProvider>
+              <ToastProvider>
+                <BackgroundProvider useStarfield={true} useGradient={true}>
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<MainPage />} />
-                  <Route path="/leaderboard" element={<PublicLeaderboard />} />
+                  <Route path="/leaderboard" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <PublicLeaderboard />
+                    </Suspense>
+                  } />
+                  <Route path="/invite/accept" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AcceptInvitation />
+                    </Suspense>
+                  } />
 
                   {/* Admin Routes */}
                   <Route path="/admin" element={
@@ -69,15 +80,6 @@ function App() {
                       <AuthenticatedLayout>
                         <Suspense fallback={<PageLoader />}>
                           <AdminHome />
-                        </Suspense>
-                      </AuthenticatedLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/admin/projects" element={
-                    <ProtectedRoute requiredRole="admin">
-                      <AuthenticatedLayout>
-                        <Suspense fallback={<PageLoader />}>
-                          <AdminProjects />
                         </Suspense>
                       </AuthenticatedLayout>
                     </ProtectedRoute>
@@ -138,15 +140,6 @@ function App() {
                       </AuthenticatedLayout>
                     </ProtectedRoute>
                   } />
-                  <Route path="/app/projects" element={
-                    <ProtectedRoute requiredRole="participant">
-                      <AuthenticatedLayout>
-                        <Suspense fallback={<PageLoader />}>
-                          <Projects />
-                        </Suspense>
-                      </AuthenticatedLayout>
-                    </ProtectedRoute>
-                  } />
                   <Route path="/app/teams" element={
                     <ProtectedRoute requiredRole="participant">
                       <AuthenticatedLayout>
@@ -168,14 +161,18 @@ function App() {
                   <Route path="/app/profile" element={
                     <ProtectedRoute requiredRole="participant">
                       <AuthenticatedLayout>
-                        <ProfilePage />
+                        <Suspense fallback={<PageLoader />}>
+                          <ProfilePage />
+                        </Suspense>
                       </AuthenticatedLayout>
                     </ProtectedRoute>
                   } />
                   <Route path="/app/profile/edit" element={
                     <ProtectedRoute requiredRole="participant">
                       <AuthenticatedLayout>
-                        <EditProfilePage />
+                        <Suspense fallback={<PageLoader />}>
+                          <EditProfilePage />
+                        </Suspense>
                       </AuthenticatedLayout>
                     </ProtectedRoute>
                   } />
@@ -263,9 +260,10 @@ function App() {
                </BackgroundProvider>
              </ToastProvider>
            </SyncProvider>
-         </AuthProvider>
-       </ThemeProvider>
-     </ErrorBoundary>
+         </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -146,8 +146,8 @@ const AuthModal = ({ isOpen, onClose, redirectTo }) => {
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full h-11 px-4 bg-bg-card border rounded-xl text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
-                  errors.name ? 'border-error-red' : 'border-border-light'
+                className={`w-full h-11 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
+                  errors.name ? 'border-error-red' : 'border-gray-300 dark:border-border-light'
                 }`}
               />
               {errors.name && <p className="text-error-red text-sm mt-1">{errors.name}</p>}
@@ -161,8 +161,8 @@ const AuthModal = ({ isOpen, onClose, redirectTo }) => {
               placeholder="Email Address"
               value={formData.email}
               onChange={handleInputChange}
-              className={`w-full h-11 px-4 bg-bg-card border rounded-xl text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
-                errors.email ? 'border-error-red' : 'border-border-light'
+              className={`w-full h-11 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
+                errors.email ? 'border-error-red' : 'border-gray-300 dark:border-border-light'
               }`}
             />
             {errors.email && <p className="text-error-red text-sm mt-1">{errors.email}</p>}
@@ -175,14 +175,14 @@ const AuthModal = ({ isOpen, onClose, redirectTo }) => {
               placeholder="Password"
               value={formData.password}
               onChange={handleInputChange}
-              className={`w-full h-11 px-4 pr-12 bg-bg-card border rounded-xl text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
-                errors.password ? 'border-error-red' : 'border-border-light'
+              className={`w-full h-11 px-4 pr-12 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
+                errors.password ? 'border-error-red' : 'border-gray-300 dark:border-border-light'
               }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-text-muted hover:text-gray-700 dark:hover:text-white"
             >
               <i className={`uil ${showPassword ? 'uil-eye-slash' : 'uil-eye'}`}></i>
             </button>
@@ -197,8 +197,8 @@ const AuthModal = ({ isOpen, onClose, redirectTo }) => {
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className={`w-full h-11 px-4 bg-bg-card border rounded-xl text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
-                  errors.confirmPassword ? 'border-error-red' : 'border-border-light'
+                className={`w-full h-11 px-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-purple transition-all ${
+                  errors.confirmPassword ? 'border-error-red' : 'border-gray-300 dark:border-border-light'
                 }`}
               />
               {errors.confirmPassword && <p className="text-error-red text-sm mt-1">{errors.confirmPassword}</p>}

@@ -22,54 +22,68 @@ const JudgeHome = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/judge/rank`, {
-        method: 'POST',
+
+      // Get pending submissions from submissions API (filtered by status)
+      console.log('[JudgeHome] Fetching submitted submissions');
+      const submissionsResponse = await fetch(`${API_BASE_URL}/submissions?status=submitted`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
-        },
-        body: JSON.stringify({
-          tenant_id: 'default',
-          event_id: 'default_event',
-          limit: 10
-        })
+        }
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const rankings = data.data?.rankings || [];
-        
-        // Calculate stats
-        const total = rankings.length;
-        const avgScore = total > 0 
-          ? (rankings.reduce((sum, r) => sum + (r.total_score || 0), 0) / total).toFixed(1)
-          : 0;
-        
-        setStats({
-          pendingReviews: Math.max(0, total - rankings.filter(r => r.total_score > 0).length),
-          completedReviews: rankings.filter(r => r.total_score > 0).length,
-          averageScore: avgScore,
-          totalSubmissions: total
-        });
-        
-        // Format recent submissions
-        const recent = rankings.slice(0, 4).map((item, index) => ({
-          id: item.team_id || index + 1,
-          title: `Project by ${item.team_id}`,
-          team: item.team_id,
-          track: 'AI/ML',
-          status: item.total_score > 0 ? 'judged' : 'pending',
-          score: item.total_score || 0,
-          updated: 'Recently',
-          submission_time: item.submission_time || new Date().toISOString()
-        }));
-        
-        setRecentSubmissions(recent);
+
+      let submissions = [];
+      if (submissionsResponse.ok) {
+        const payload = await submissionsResponse.json();
+        submissions = payload.data || [];
+        console.log(`[JudgeHome] Received ${submissions.length} submissions`, submissions);
       } else {
-        console.error('Failed to fetch judge data:', response.statusText);
+        console.error('Failed to fetch submissions:', submissionsResponse.statusText);
       }
+
+      // Score summary by judges can still use ranking endpoint
+      const rankResponse = await fetch(`${API_BASE_URL}/judge/rank?tenant_id=default&event_id=default_event&limit=50`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
+        }
+      });
+
+      const rankings = rankResponse.ok ? (await rankResponse.json()).data?.rankings || [] : [];
+
+      // Calculate stats
+      const total = submissions.length;
+      const pendingCount = submissions.filter((s) => s.status === 'submitted').length;
+      const completedCount = submissions.filter((s) => s.status !== 'submitted').length;
+      const avgScore = rankings.length > 0
+        ? (rankings.reduce((sum, r) => sum + (r.total_score || 0), 0) / rankings.length).toFixed(1)
+        : 0;
+
+      setStats({
+        pendingReviews: pendingCount,
+        completedReviews: completedCount,
+        averageScore: avgScore,
+        totalSubmissions: total
+      });
+
+      const recent = submissions.slice(0, 4).map((item, index) => ({
+        id: item.submission_id || item._id || `${item.team_id}-${index}`,
+        title: item.title || `Submission by ${item.team_id}`,
+        team: item.team_id || 'Unknown',
+        track: item.track || 'N/A',
+        status: item.status || 'submitted',
+        score: item.score || 0,
+        updated: item.submitted_at ? new Date(item.submitted_at).toLocaleString() : 'Unknown',
+        submission_time: item.submitted_at || new Date().toISOString(),
+        description: item.description || '' ,
+        github_url: item.github_link || item.github_url || null
+      }));
+
+      setRecentSubmissions(recent);
     } catch (error) {
-      console.error('Failed to fetch judge data:', error);
+      console.error('Failed to fetch judge dashboard data:', error);
     } finally {
       setIsLoading(false);
     }

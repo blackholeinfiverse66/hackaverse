@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import TeamInviteModal from './TeamInviteModal';
 
 const Teams = () => {
   const [myTeam, setMyTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
   useEffect(() => {
     fetchMyTeam();
-  }, [location.pathname]); // Refetch when navigating to this page
+  }, [location.pathname]);
 
   const fetchMyTeam = async () => {
     try {
@@ -26,18 +28,14 @@ const Teams = () => {
       const data = response.data;
       
       if (data.success && data.data && data.data.length > 0) {
-        // Get stored team_id from localStorage
         const storedTeamId = localStorage.getItem('team_id');
         
-        // Filter to get only the user's team
         let userTeam = null;
         
-        // First try to match by stored team_id
         if (storedTeamId) {
           userTeam = data.data.find(team => team.team_id === storedTeamId);
         }
         
-        // If not found, try to match by user ID or email
         if (!userTeam && user) {
           userTeam = data.data.find(team => 
             team.leader_id === user?.id || 
@@ -54,7 +52,6 @@ const Teams = () => {
         if (userTeam) {
           console.log('User team found:', userTeam);
           setMyTeam(userTeam);
-          // Update localStorage with correct team_id
           localStorage.setItem('team_id', userTeam.team_id);
         } else {
           console.log('No team found for user');
@@ -206,11 +203,17 @@ const Teams = () => {
               <button
                 className="px-4 py-2 border rounded-lg transition-colors text-sm"
                 style={{ borderColor: 'rgba(255, 255, 255, 0.2)', color: 'var(--text-secondary)' }}
-                onClick={() => alert('Invite feature coming soon!')}
+                onClick={() => setIsInviteModalOpen(true)}
               >
                 Invite Members
               </button>
             </div>
+
+            <TeamInviteModal
+              isOpen={isInviteModalOpen}
+              onClose={() => setIsInviteModalOpen(false)}
+              teamId={myTeam.team_id}
+            />
           </div>
         )}
       </div>

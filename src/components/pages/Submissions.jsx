@@ -14,7 +14,7 @@ const Submissions = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [activeCategory, setActiveCategory] = useState(searchParams.get('status') || 'all');
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [submitForm, setSubmitForm] = useState({ title: '', description: '', github_url: '', demo_url: '' });
+  const [submitForm, setSubmitForm] = useState({ name: '', description: '', github: '', deployment: '', video: '', track: '' });
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
@@ -33,7 +33,6 @@ const Submissions = () => {
       try {
         const response = await apiService.submissions.getAll();
         const data = response.data;
-        // Ensure submissions is always an array
         if (data && Array.isArray(data)) {
           setSubmissions(data);
         } else if (data && data.data && Array.isArray(data.data)) {
@@ -44,7 +43,6 @@ const Submissions = () => {
       } catch (error) {
         console.error('Failed to fetch submissions:', error);
         setSubmissions([]);
-        // Fallback to mock data for development
         if (import.meta.env.VITE_USE_MOCK_API !== 'false') {
           const mockSubmissions = [
             {
@@ -110,6 +108,15 @@ const Submissions = () => {
     fetchSubmissions();
   }, []);
 
+  useEffect(() => {
+    if (showSubmitModal) {
+      document.body.classList.add('overflow-hidden');
+    } else {
+      document.body.classList.remove('overflow-hidden');
+    }
+    return () => document.body.classList.remove('overflow-hidden');
+  }, [showSubmitModal]);
+
   const categories = [
     { id: 'all', label: 'All', count: Array.isArray(submissions) ? submissions.length : 0 },
     { id: 'queued', label: 'Queued', count: Array.isArray(submissions) ? submissions.filter(s => s.status === 'queued').length : 0 },
@@ -120,7 +127,7 @@ const Submissions = () => {
 
   const filteredSubmissions = Array.isArray(submissions) ? submissions.filter(submission => {
     if (activeCategory !== 'all' && submission.status !== activeCategory) return false;
-    if (filters.search && !submission.project.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    if (filters.search && !submission.title?.toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.track !== 'all' && submission.track !== filters.track) return false;
     if (filters.stage !== 'all' && submission.stage !== filters.stage) return false;
     return true;
@@ -168,7 +175,7 @@ const Submissions = () => {
   const handleSubmitProject = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!submitForm.title.trim() || submitForm.title.length < 5) newErrors.title = 'Title must be at least 5 characters';
+    if (!submitForm.name.trim() || submitForm.name.length < 5) newErrors.name = 'Project Name must be at least 5 characters';
     if (!submitForm.description.trim() || submitForm.description.length < 50) newErrors.description = 'Description must be at least 50 characters';
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -181,21 +188,33 @@ const Submissions = () => {
         try {
           setSubmitting(true);
           const teamId = localStorage.getItem('team_id') || 'default_team';
-          const requestId = `${teamId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-          
-          await apiService.judge.submitAndScore({
-            submission_text: `Title: ${submitForm.title}\n\nDescription: ${submitForm.description}\n\nGitHub: ${submitForm.github_url}\n\nDemo: ${submitForm.demo_url}`,
+          const hackathonId = localStorage.getItem('hackathon_id') || 'hack_1';
+
+          const payload = {
             team_id: teamId,
-            request_id: requestId
-          });
-          
+            hackathon_id: hackathonId,
+            title: submitForm.name,
+            description: submitForm.description,
+            github_link: submitForm.github,
+            demo_link: submitForm.deployment || submitForm.video,
+            submitted_by: localStorage.getItem('user_email') || ''
+          };
+
+          console.log('SUBMITTING SUBMISSION:', payload);
+
+          const response = await apiService.submissions.create(payload);
+          if (!response?.data?.success) {
+            throw new Error(response?.data?.message || 'Failed to submit project');
+          }
+
           setShowSubmitModal(false);
-          setSubmitForm({ title: '', description: '', github_url: '', demo_url: '' });
+          setSubmitForm({ name: '', description: '', github: '', deployment: '', video: '', track: '' });
           setErrors({});
-          success('Project submitted successfully! AI judging in progress...');
+          success('Project submitted successfully!');
           setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
-          showError(error.response?.data?.message || 'Failed to submit project');
+          console.error('Submission error:', error);
+          showError(error.message || error.response?.data?.message || 'Failed to submit project');
         } finally {
           setSubmitting(false);
           setConfirmDialog({ isOpen: false });
@@ -236,7 +255,7 @@ const Submissions = () => {
       <td className="px-4 py-3">
         <div>
           <div className="font-medium text-white group-hover:text-cyan transition-colors text-sm">
-            {submission.project}
+            {submission.title || submission.project || 'Untitled'}
           </div>
           <div className="text-xs text-text-muted">{submission.track}</div>
         </div>
@@ -423,7 +442,7 @@ const Submissions = () => {
               </thead>
               <tbody>
                 {filteredSubmissions.map((submission, index) => (
-                  <SubmissionRow key={submission.id} submission={submission} index={index} />
+                  <SubmissionRow key={`${submission.id}-${index}`} submission={submission} index={index} />
                 ))}
               </tbody>
             </table>
@@ -451,37 +470,56 @@ const Submissions = () => {
           </div>
         )}
 
-        {/* Submit Project Modal */}
+        {/* Submit Project Modal - FIXED UI */}
         {showSubmitModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowSubmitModal(false)}>
-            <div className="bg-bg-card border border-white/10 rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-              <h2 className="text-2xl font-bold text-white mb-4">Submit Your Project</h2>
-              <form onSubmit={handleSubmitProject} className="space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowSubmitModal(false)}>
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 dark:bg-slate-900 light:bg-white rounded-xl shadow-xl p-6 border border-slate-700 light:border-gray-200 mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white dark:text-white light:text-gray-900">Submit Your Project</h2>
+                <button onClick={() => setShowSubmitModal(false)} className="text-gray-400 hover:text-white dark:hover:text-white light:hover:text-gray-600 transition-colors">
+                  <i className="uil uil-times text-xl"></i>
+                </button>
+              </div>
+              <form className="space-y-4" onSubmit={handleSubmitProject}>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Project Title *</label>
-                  <input type="text" value={submitForm.title} onChange={(e) => setSubmitForm({...submitForm, title: e.target.value})} className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white ${errors.title ? 'border-red-500' : 'border-white/10'}`} placeholder="Enter project title" required minLength="5" />
-                  {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title}</p>}
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">Project Name *</label>
+                  <input type="text" value={submitForm.name} onChange={(e) => setSubmitForm({...submitForm, name: e.target.value})} className={`w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border rounded-lg text-white dark:text-white light:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 light:placeholder-gray-400 ${errors.name ? 'border-red-500' : 'border-white/10 dark:border-white/10 light:border-gray-300'}`} placeholder="Enter project name" required minLength="5" />
+                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Description * (min 50 characters)</label>
-                  <textarea value={submitForm.description} onChange={(e) => setSubmitForm({...submitForm, description: e.target.value})} className={`w-full px-3 py-2 bg-white/5 border rounded-lg text-white ${errors.description ? 'border-red-500' : 'border-white/10'}`} rows="6" placeholder="Describe your project..." required minLength="50" />
-                  <p className={`text-xs mt-1 ${submitForm.description.length < 50 ? 'text-red-400' : 'text-text-muted'}`}>{submitForm.description.length}/50 characters</p>
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">Description * (min 50 characters)</label>
+                  <textarea value={submitForm.description} onChange={(e) => setSubmitForm({...submitForm, description: e.target.value})} className={`w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border rounded-lg text-white dark:text-white light:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 light:placeholder-gray-400 ${errors.description ? 'border-red-500' : 'border-white/10 dark:border-white/10 light:border-gray-300'}`} rows="6" placeholder="Describe your project..." required minLength="50" />
+                  <p className={`text-xs mt-1 ${submitForm.description.length < 50 ? 'text-red-400' : 'text-gray-400 dark:text-gray-400 light:text-gray-600'}`}>{submitForm.description.length}/50 characters</p>
                   {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">GitHub Repository URL</label>
-                  <input type="url" value={submitForm.github_url} onChange={(e) => setSubmitForm({...submitForm, github_url: e.target.value})} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white" placeholder="https://github.com/..." />
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">GitHub Repository URL</label>
+                  <input type="url" value={submitForm.github} onChange={(e) => setSubmitForm({...submitForm, github: e.target.value})} className="w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border border-white/10 dark:border-white/10 light:border-gray-300 rounded-lg text-white dark:text-white light:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 light:placeholder-gray-400" placeholder="https://github.com/..." />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Live Demo URL</label>
-                  <input type="url" value={submitForm.demo_url} onChange={(e) => setSubmitForm({...submitForm, demo_url: e.target.value})} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white" placeholder="https://..." />
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">Deployment Link</label>
+                  <input type="url" value={submitForm.deployment} onChange={(e) => setSubmitForm({...submitForm, deployment: e.target.value})} className="w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border border-white/10 dark:border-white/10 light:border-gray-300 rounded-lg text-white dark:text-white light:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 light:placeholder-gray-400" placeholder="https://..." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">Demo Video Link</label>
+                  <input type="url" value={submitForm.video} onChange={(e) => setSubmitForm({...submitForm, video: e.target.value})} className="w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border border-white/10 dark:border-white/10 light:border-gray-300 rounded-lg text-white dark:text-white light:text-gray-900 placeholder-gray-500 dark:placeholder-gray-500 light:placeholder-gray-400" placeholder="https://..." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 dark:text-gray-300 light:text-gray-700 mb-2">Track Selection *</label>
+                  <select value={submitForm.track} onChange={(e) => setSubmitForm({...submitForm, track: e.target.value})} className="w-full px-3 py-2 bg-white/5 dark:bg-white/5 light:bg-gray-100 border border-white/10 dark:border-white/10 light:border-gray-300 rounded-lg text-white dark:text-white light:text-gray-900" required>
+                    <option value="" disabled>Select track</option>
+                    <option value="AI/ML">AI/ML</option>
+                    <option value="Web3">Web3</option>
+                    <option value="Gaming">Gaming</option>
+                    <option value="Open Innovation">Open Innovation</option>
+                  </select>
                 </div>
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                   <p className="text-sm text-blue-400"><strong>Note:</strong> Your project will be automatically judged by AI. Scores will be available shortly after submission.</p>
                 </div>
-                <div className="flex gap-2">
-                  <button type="submit" disabled={submitting} className="flex-1 bg-cyan hover:bg-cyan/80 disabled:opacity-50 text-black font-medium py-3 rounded-lg">{submitting ? 'Submitting...' : 'Submit Project'}</button>
-                  <button type="button" onClick={() => setShowSubmitModal(false)} className="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-lg">Cancel</button>
+                <div className="flex gap-2 pt-4">
+                  <button type="submit" disabled={submitting} className="flex-1 bg-cyan hover:bg-cyan/80 disabled:opacity-50 text-black font-medium py-3 rounded-lg transition-colors">{submitting ? 'Submitting...' : 'Submit Project'}</button>
+                  <button type="button" onClick={() => setShowSubmitModal(false)} className="flex-1 bg-white/5 hover:bg-white/10 text-white py-3 rounded-lg transition-colors">Cancel</button>
                 </div>
               </form>
             </div>

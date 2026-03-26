@@ -2889,3 +2889,65 @@ input:checked + .toggle-slider:before {
     grid-template-columns: 1fr;
   }
 }
+
+/* Fix login input text visibility - CRITICAL FIX */
+input,
+textarea,
+select {
+  color: #111827 !important;
+  background: #ffffff !important;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: #ffffff !important;
+  background: #1e293b !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Light mode input fixes */
+.light input,
+.light textarea,
+.light select {
+  color: #111827 !important;
+  background: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.light input:focus,
+.light textarea:focus,
+.light select:focus {
+  border-color: #f97316 !important;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+}
+
+/* Dark mode input fixes */
+.dark input,
+.dark textarea,
+.dark select {
+  color: #ffffff !important;
+  background: #1e293b !important;
+  border-color: #475569 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #0891b2 !important;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1) !important;
+}

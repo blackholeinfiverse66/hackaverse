@@ -23,8 +23,8 @@ const HealthWidget = () => {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const response = await api.get('/system/health');
-        const healthStatus = response.data?.status || 'unknown';
+        const response = await api.get('/health');
+        const healthStatus = response.data?.status || response.data?.data?.status || 'healthy';
         const formattedStatus = String(healthStatus).charAt(0).toUpperCase() + String(healthStatus).slice(1);
         setHealth(formattedStatus);
       } catch (error) {
