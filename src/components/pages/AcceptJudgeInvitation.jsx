@@ -1,34 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
-import { API_BASE_URL } from '../../constants/appConstants';
-import MemberSignupForm from './MemberSignupForm';
 
 /**
- * IMPROVED ACCEPT INVITATION COMPONENT
+ * JUDGE INVITATION ACCEPTANCE COMPONENT
  * 
  * Features:
- * ✅ New flow: Accept → Signup Form → Submit
- * ✅ Collects member name and bio
- * ✅ All states handled: loading, pending, signup_form, accepting, success, error, expired
- * ✅ Full error UI
- * ✅ Comprehensive logging
+ * ✅ Handles all states: loading, pending, accepting, success, error, expired
+ * ✅ Safe token extraction using useSearchParams
+ * ✅ Comprehensive error handling
+ * ✅ Full-page error screens
+ * ✅ Success screen with judge details
+ * ✅ Auto-redirect after 3 seconds
+ * ✅ Retry mechanism
+ * ✅ Extensive console logging
  */
 
-const AcceptInvitation = () => {
+const AcceptJudgeInvitation = () => {
   // ========================================================================
   // STATE MANAGEMENT
   // ========================================================================
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   
   // UI State
-  const [state, setState] = useState('LOADING'); // LOADING, PENDING, SIGNUP_FORM, ACCEPTING, SUCCESS, ERROR, EXPIRED
+  const [state, setState] = useState('LOADING'); // LOADING, PENDING, ACCEPTING, SUCCESS, ERROR, EXPIRED
   const [invitation, setInvitation] = useState(null);
   const [acceptedData, setAcceptedData] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [errorDetails, setErrorDetails] = useState(null);
+  const [judgeName, setJudgeName] = useState('');
+  const [nameError, setNameError] = useState(null);
   
   // Token
   const token = searchParams.get('token');
@@ -38,12 +43,12 @@ const AcceptInvitation = () => {
   // ========================================================================
 
   useEffect(() => {
-    console.log('[AcceptInvitation] Component mounted');
-    console.log('[AcceptInvitation] Token from URL:', token ? `${token.substring(0, 20)}...` : 'MISSING');
+    console.log('[AcceptJudgeInvitation] Component mounted');
+    console.log('[AcceptJudgeInvitation] Token from URL:', token ? `${token.substring(0, 20)}...` : 'MISSING');
     
     // Validate token exists
     if (!token) {
-      console.error('[AcceptInvitation] No token provided in URL');
+      console.error('[AcceptJudgeInvitation] No token provided in URL');
       setErrorMessage('Invalid Invitation Link');
       setErrorDetails('No token found in URL. Please use the link from your email.');
       setState('ERROR');
@@ -59,16 +64,17 @@ const AcceptInvitation = () => {
   // ========================================================================
 
   const fetchInvitationDetails = async () => {
-    console.log('[AcceptInvitation] Fetching invitation details');
+    console.log('[AcceptJudgeInvitation] Fetching invitation details');
     
     try {
       setState('LOADING');
       setErrorMessage(null);
       setErrorDetails(null);
       
-      const url = `${API_BASE_URL}/teams/invitations/${token}`;
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const url = `${apiBaseUrl}/judge/invitations/${token}`;
       
-      console.log('[AcceptInvitation] API Call:', {
+      console.log('[AcceptJudgeInvitation] API Call:', {
         method: 'GET',
         url: url,
         token: `${token.substring(0, 20)}...`
@@ -81,25 +87,24 @@ const AcceptInvitation = () => {
         }
       });
       
-      console.log('[AcceptInvitation] API Response:', response.data);
+      console.log('[AcceptJudgeInvitation] API Response:', response.data);
       
       if (!response.data || !response.data.data) {
         throw new Error('Invalid response format from server');
       }
       
       const invitationData = response.data.data;
-      console.log('[AcceptInvitation] Invitation loaded:', {
-        team_name: invitationData.team_name,
-        hackathon_name: invitationData.hackathon_name,
-        email: invitationData.invitee_email
+      console.log('[AcceptJudgeInvitation] Invitation loaded:', {
+        email: invitationData.email,
+        hackathon_name: invitationData.hackathon_name
       });
       
       setInvitation(invitationData);
       setState('PENDING');
       
     } catch (err) {
-      console.error('[AcceptInvitation] Error fetching invitation:', err);
-      console.error('[AcceptInvitation] Error details:', {
+      console.error('[AcceptJudgeInvitation] Error fetching invitation:', err);
+      console.error('[AcceptJudgeInvitation] Error details:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data
@@ -110,22 +115,22 @@ const AcceptInvitation = () => {
       
       // Handle specific error cases
       if (statusCode === 400 && errorMsg.includes('expired')) {
-        console.log('[AcceptInvitation] Invitation expired');
+        console.log('[AcceptJudgeInvitation] Invitation expired');
         setErrorMessage('Invitation Expired');
-        setErrorDetails('This invitation has expired. Please request a new one from your team.');
+        setErrorDetails('This invitation has expired. Please request a new one from the admin.');
         setState('EXPIRED');
       } else if (statusCode === 404) {
-        console.log('[AcceptInvitation] Invitation not found');
+        console.log('[AcceptJudgeInvitation] Invitation not found');
         setErrorMessage('Invalid Invitation');
         setErrorDetails('This invitation does not exist or has already been used.');
         setState('ERROR');
       } else if (err.code === 'ECONNABORTED') {
-        console.log('[AcceptInvitation] Request timeout');
+        console.log('[AcceptJudgeInvitation] Request timeout');
         setErrorMessage('Connection Timeout');
         setErrorDetails('The server took too long to respond. Please try again.');
         setState('ERROR');
       } else {
-        console.log('[AcceptInvitation] Generic error');
+        console.log('[AcceptJudgeInvitation] Generic error');
         setErrorMessage('Failed to Load Invitation');
         setErrorDetails(errorMsg);
         setState('ERROR');
@@ -134,23 +139,41 @@ const AcceptInvitation = () => {
   };
 
   // ========================================================================
+  // VALIDATE NAME INPUT
+  // ========================================================================
+
+  const validateName = (name) => {
+    if (!name || !name.trim()) {
+      setNameError('Name is required');
+      return false;
+    }
+    if (name.trim().length < 2) {
+      setNameError('Name must be at least 2 characters');
+      return false;
+    }
+    if (name.trim().length > 100) {
+      setNameError('Name must be less than 100 characters');
+      return false;
+    }
+    setNameError(null);
+    return true;
+  };
+
+  // ========================================================================
   // HANDLE ACCEPT INVITATION
   // ========================================================================
 
   const handleAcceptInvitation = async () => {
-    console.log('[AcceptInvitation] Accept button clicked - showing signup form');
-    setState('SIGNUP_FORM');
-  };
-
-  // ========================================================================
-  // HANDLE SIGNUP FORM SUBMISSION
-  // ========================================================================
-
-  const handleSubmitSignup = async (formData) => {
-    console.log('[AcceptInvitation] Signup form submitted:', { member_name: formData.member_name, has_bio: !!formData.member_bio });
+    console.log('[AcceptJudgeInvitation] Accept button clicked');
     
+    // Validate name
+    if (!validateName(judgeName)) {
+      return;
+    }
+    
+    // Safety check
     if (!token) {
-      console.error('[AcceptInvitation] No token available');
+      console.error('[AcceptJudgeInvitation] No token available');
       setErrorMessage('Invalid Request');
       setErrorDetails('Token is missing. Please use the link from your email.');
       setState('ERROR');
@@ -162,22 +185,19 @@ const AcceptInvitation = () => {
     setErrorDetails(null);
     
     try {
-      const url = `${API_BASE_URL}/teams/invitations/accept-with-details`;
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const url = `${apiBaseUrl}/judge/invitations/accept`;
       
-      console.log('[AcceptInvitation] API Call:', {
+      console.log('[AcceptJudgeInvitation] API Call:', {
         method: 'POST',
         url: url,
         token: `${token.substring(0, 20)}...`,
-        member_name: formData.member_name
+        name: judgeName
       });
       
       const response = await axios.post(
         url,
-        { 
-          token,
-          member_name: formData.member_name,
-          member_bio: formData.member_bio
-        },
+        { token, name: judgeName },
         {
           timeout: 10000,
           headers: {
@@ -186,7 +206,7 @@ const AcceptInvitation = () => {
         }
       );
       
-      console.log('[AcceptInvitation] API Response:', response.data);
+      console.log('[AcceptJudgeInvitation] API Response:', response.data);
       
       // Validate response
       if (!response.data) {
@@ -201,31 +221,39 @@ const AcceptInvitation = () => {
       }
       
       // Validate required fields
-      if (!data.team_id || !data.team_name) {
-        console.warn('[AcceptInvitation] Response missing required fields:', data);
-        throw new Error('Invalid response format: missing team information');
+      if (!data.data || !data.data.email) {
+        console.warn('[AcceptJudgeInvitation] Response missing required fields:', data);
+        throw new Error('Invalid response format: missing judge information');
       }
       
-      console.log('[AcceptInvitation] Acceptance successful:', {
-        team_id: data.team_id,
-        team_name: data.team_name,
-        hackathon_name: data.hackathon_name
+      console.log('[AcceptJudgeInvitation] Acceptance successful:', {
+        email: data.data.email,
+        name: data.data.name,
+        hackathon_name: data.data.hackathon_name
       });
       
       // Store accepted data and show success screen
-      setAcceptedData(data);
+      setAcceptedData(data.data);
       setState('SUCCESS');
       
+      // Update AuthContext with judge role
+      const updatedUser = {
+        ...authUser,
+        role: 'judge',
+        name: data.data.name
+      };
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+      
       // Auto-redirect after 3 seconds
-      console.log('[AcceptInvitation] Scheduling redirect to /app/teams in 3 seconds');
+      console.log('[AcceptJudgeInvitation] Scheduling redirect to /judge in 3 seconds');
       setTimeout(() => {
-        console.log('[AcceptInvitation] Redirecting to /app/teams');
-        navigate('/app/teams');
+        console.log('[AcceptJudgeInvitation] Redirecting to /judge');
+        window.location.href = '/judge';
       }, 3000);
       
     } catch (err) {
-      console.error('[AcceptInvitation] Error accepting invitation:', err);
-      console.error('[AcceptInvitation] Error details:', {
+      console.error('[AcceptJudgeInvitation] Error accepting invitation:', err);
+      console.error('[AcceptJudgeInvitation] Error details:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data
@@ -294,7 +322,7 @@ const AcceptInvitation = () => {
           <div className="space-y-3">
             <button
               onClick={() => {
-                console.log('[AcceptInvitation] Retry button clicked');
+                console.log('[AcceptJudgeInvitation] Retry button clicked');
                 fetchInvitationDetails();
               }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
@@ -304,7 +332,7 @@ const AcceptInvitation = () => {
             
             <button
               onClick={() => {
-                console.log('[AcceptInvitation] Go Home button clicked');
+                console.log('[AcceptJudgeInvitation] Go Home button clicked');
                 navigate('/');
               }}
               className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
@@ -352,7 +380,7 @@ const AcceptInvitation = () => {
           {/* Expired Details */}
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-6">
             <p className="text-sm text-yellow-200">
-              Invitations expire after 7 days. Please ask your team to send you a new invitation.
+              Invitations expire after 7 days. Please ask the admin to send you a new invitation.
             </p>
           </div>
 
@@ -387,29 +415,39 @@ const AcceptInvitation = () => {
 
           {/* Success Message */}
           <h1 className="text-3xl font-bold text-white mb-2 text-center">
-            Welcome!
+            Welcome, Judge!
           </h1>
           <p className="text-green-400 font-semibold mb-6 text-center">
-            You have successfully joined the team!
+            Your account has been created successfully!
           </p>
 
-          {/* Team Details */}
+          {/* Judge Details */}
           <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Team Information</h2>
+            <h2 className="text-lg font-semibold text-white mb-4">Your Information</h2>
             
             <div className="space-y-4">
               <div className="flex items-start">
-                <span className="text-blue-400 mr-3 text-xl">👥</span>
+                <span className="text-blue-400 mr-3 text-xl">👤</span>
                 <div>
-                  <p className="text-sm text-slate-400">Team Name</p>
+                  <p className="text-sm text-slate-400">Name</p>
                   <p className="text-base font-semibold text-white">
-                    {acceptedData.team_name || 'N/A'}
+                    {acceptedData.name || 'N/A'}
                   </p>
                 </div>
               </div>
               
               <div className="flex items-start">
-                <span className="text-purple-400 mr-3 text-xl">🏆</span>
+                <span className="text-purple-400 mr-3 text-xl">📧</span>
+                <div>
+                  <p className="text-sm text-slate-400">Email</p>
+                  <p className="text-base font-semibold text-white break-all">
+                    {acceptedData.email || 'N/A'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <span className="text-yellow-400 mr-3 text-xl">🏆</span>
                 <div>
                   <p className="text-sm text-slate-400">Hackathon</p>
                   <p className="text-base font-semibold text-white">
@@ -423,17 +461,17 @@ const AcceptInvitation = () => {
                 <div>
                   <p className="text-sm text-slate-400">Status</p>
                   <p className="text-base font-semibold text-green-400">
-                    Member Added
+                    Active Judge
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Email Confirmation */}
+          {/* Confirmation Message */}
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-200">
-              <strong>✓ Email Registered:</strong> Your email has been added to the team member list.
+              <strong>✓ Account Created:</strong> You can now access the judge dashboard and start reviewing submissions.
             </p>
           </div>
 
@@ -441,46 +479,37 @@ const AcceptInvitation = () => {
           <div className="space-y-3">
             <button
               onClick={() => {
-                console.log('[AcceptInvitation] Go to Teams button clicked');
-                navigate('/app/teams');
+                console.log('[AcceptJudgeInvitation] Go to Judge Dashboard button clicked');
+                const updatedUser = {
+                  ...authUser,
+                  role: 'judge',
+                  name: acceptedData.name
+                };
+                localStorage.setItem('userData', JSON.stringify(updatedUser));
+                window.location.href = '/judge';
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
             >
-              Go to Teams
+              Go to Judge Dashboard
             </button>
             
             <button
               onClick={() => {
-                console.log('[AcceptInvitation] Go to Dashboard button clicked');
-                navigate('/app');
+                console.log('[AcceptJudgeInvitation] Go to Homepage button clicked');
+                navigate('/');
               }}
               className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
             >
-              Go to Dashboard
+              Go to Homepage
             </button>
           </div>
 
           {/* Auto-redirect message */}
           <p className="text-xs text-slate-400 mt-6 text-center">
-            Redirecting to teams page in 3 seconds...
+            Redirecting to judge dashboard in 3 seconds...
           </p>
         </div>
       </div>
-    );
-  }
-
-  // ========================================================================
-  // RENDER - SIGNUP FORM STATE (Collect member details)
-  // ========================================================================
-
-  if (state === 'SIGNUP_FORM' && invitation) {
-    return (
-      <MemberSignupForm
-        invitation={invitation}
-        onSubmit={handleSubmitSignup}
-        loading={state === 'ACCEPTING'}
-        error={errorMessage}
-      />
     );
   }
 
@@ -493,44 +522,66 @@ const AcceptInvitation = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-slate-800 rounded-lg shadow-2xl p-8 border border-blue-500/20">
           <div className="text-center mb-6">
-            <div className="text-5xl mb-4">🚀</div>
+            <div className="text-5xl mb-4">⚖️</div>
             <h1 className="text-2xl font-bold text-white mb-2">
-              Team Invitation
+              Judge Invitation
             </h1>
             <p className="text-slate-400">
-              You've been invited to join a hackathon team!
+              You've been invited to be a judge!
             </p>
           </div>
 
+          {/* Invitation Details */}
           <div className="space-y-4 mb-6">
             <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-              <h3 className="font-semibold text-white mb-3">Team Details</h3>
+              <h3 className="font-semibold text-white mb-3">Hackathon Details</h3>
               <div className="space-y-2">
-                <p className="text-sm text-slate-300">
-                  <strong className="text-slate-400">Team:</strong> {invitation?.team_name}
-                </p>
                 <p className="text-sm text-slate-300">
                   <strong className="text-slate-400">Hackathon:</strong> {invitation?.hackathon_name}
                 </p>
                 <p className="text-sm text-slate-300">
-                  <strong className="text-slate-400">Invited Email:</strong> {invitation?.invitee_email}
+                  <strong className="text-slate-400">Email:</strong> {invitation?.email}
                 </p>
               </div>
             </div>
 
             {invitation?.expires_at && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                <p className="text-sm text-yellow-200">
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                <p className="text-sm text-blue-200">
                   <strong>Expires:</strong> {new Date(invitation.expires_at).toLocaleDateString()}
                 </p>
               </div>
             )}
           </div>
 
+          {/* Name Input Form */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-white mb-2">
+              Your Full Name
+            </label>
+            <input
+              type="text"
+              value={judgeName}
+              onChange={(e) => {
+                setJudgeName(e.target.value);
+                if (nameError) validateName(e.target.value);
+              }}
+              onBlur={() => validateName(judgeName)}
+              placeholder="Enter your full name"
+              className={`w-full px-4 py-2 rounded-lg bg-slate-700 text-white placeholder-slate-400 border ${
+                nameError ? 'border-red-500' : 'border-slate-600'
+              } focus:outline-none focus:border-blue-500 transition-colors`}
+            />
+            {nameError && (
+              <p className="text-red-400 text-sm mt-2">{nameError}</p>
+            )}
+          </div>
+
+          {/* Action Buttons */}
           <div className="space-y-3">
             <button
               onClick={handleAcceptInvitation}
-              disabled={state === 'ACCEPTING'}
+              disabled={state === 'ACCEPTING' || !judgeName.trim()}
               className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors duration-200 flex items-center justify-center"
             >
               {state === 'ACCEPTING' ? (
@@ -542,13 +593,13 @@ const AcceptInvitation = () => {
                   Accepting...
                 </>
               ) : (
-                'Accept Invitation'
+                'Accept & Continue'
               )}
             </button>
             
             <button
               onClick={() => {
-                console.log('[AcceptInvitation] Decline button clicked');
+                console.log('[AcceptJudgeInvitation] Decline button clicked');
                 navigate('/');
               }}
               className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-colors duration-200"
@@ -559,7 +610,7 @@ const AcceptInvitation = () => {
 
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-400">
-              By accepting, you'll become a member of this team and can collaborate on the hackathon project.
+              By accepting, you'll become a judge and can review and score submissions.
             </p>
           </div>
         </div>
@@ -580,4 +631,4 @@ const AcceptInvitation = () => {
   );
 };
 
-export default AcceptInvitation;
+export default AcceptJudgeInvitation;

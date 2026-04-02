@@ -9,7 +9,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { apiService } from '../../services/api';
 
 const AdminHome = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const { teams, hackathons, submissions, activities } = useSyncContext();
   const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
@@ -305,8 +305,24 @@ const AdminHome = () => {
       <AnnouncementModal
         isOpen={isAnnouncementModalOpen}
         onClose={() => setIsAnnouncementModalOpen(false)}
-        onSend={(data) => {
-          console.log('Sending announcement:', data);
+        onSend={async (data) => {
+          try {
+            console.log('Sending announcement:', data);
+            const response = await apiService.announcements.create({
+              title: data.title,
+              message: data.message,
+              target: data.target,
+              priority: data.priority,
+              scheduled: data.scheduled,
+              scheduleDate: data.scheduleDate,
+              scheduleTime: data.scheduleTime
+            });
+            console.log('Announcement created:', response);
+            success('Announcement sent successfully!');
+          } catch (err) {
+            console.error('Error creating announcement:', err);
+            showError(err.message || 'Failed to send announcement');
+          }
         }}
       />
 
@@ -314,6 +330,8 @@ const AdminHome = () => {
       <InviteJudgeModal
         isOpen={isInviteJudgeModalOpen}
         onClose={() => setIsInviteJudgeModalOpen(false)}
+        onSuccess={() => success('Judge invitation sent successfully!')}
+        onError={(err) => showError(err.message || 'Failed to send judge invitation')}
       />
 
       <ToastContainer toasts={toasts} />

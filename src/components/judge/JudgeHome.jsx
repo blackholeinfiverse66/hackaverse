@@ -23,13 +23,14 @@ const JudgeHome = () => {
     try {
       setIsLoading(true);
 
-      // Get pending submissions from submissions API (filtered by status)
-      console.log('[JudgeHome] Fetching submitted submissions');
-      const submissionsResponse = await fetch(`${API_BASE_URL}/submissions?status=submitted`, {
+      // Get pending submissions from judge API (no team filtering)
+      console.log('[JudgeHome] Fetching submitted submissions from judge endpoint');
+      const submissionsResponse = await fetch(`${API_BASE_URL}/judge/submissions?status=submitted`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
+          'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
         }
       });
 
@@ -77,7 +78,7 @@ const JudgeHome = () => {
         score: item.score || 0,
         updated: item.submitted_at ? new Date(item.submitted_at).toLocaleString() : 'Unknown',
         submission_time: item.submitted_at || new Date().toISOString(),
-        description: item.description || '' ,
+        description: item.description || '',
         github_url: item.github_link || item.github_url || null
       }));
 
@@ -134,138 +135,138 @@ const JudgeHome = () => {
           </div>
         </div>
 
-      <div className="grid xl:grid-cols-[1.5fr_1fr] lg:grid-cols-1 gap-6">
-        <div className="space-y-6">
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard 
-              icon="uil-clock" 
-              value={stats.pendingReviews} 
-              label="Pending Reviews" 
-              color="warning"
-            />
-            <StatCard 
-              icon="uil-check" 
-              value={stats.completedReviews} 
-              label="Completed" 
-              color="success"
-            />
-            <StatCard 
-              icon="uil-star" 
-              value={stats.averageScore} 
-              label="Avg Score" 
-              color="cyan"
-            />
-            <StatCard 
-              icon="uil-file-alt" 
-              value={stats.totalSubmissions} 
-              label="Total Submissions" 
-              color="violet"
-            />
-          </div>
-
-          {/* Recent Submissions */}
-          <div className="glass-card rounded-2xl border">
-            <div className="p-5 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white">Recent Submissions</h2>
+        <div className="grid xl:grid-cols-[1.5fr_1fr] lg:grid-cols-1 gap-6">
+          <div className="space-y-6">
+            {/* Stats Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard 
+                icon="uil-clock" 
+                value={stats.pendingReviews} 
+                label="Pending Reviews" 
+                color="warning"
+              />
+              <StatCard 
+                icon="uil-check" 
+                value={stats.completedReviews} 
+                label="Completed" 
+                color="success"
+              />
+              <StatCard 
+                icon="uil-star" 
+                value={stats.averageScore} 
+                label="Avg Score" 
+                color="cyan"
+              />
+              <StatCard 
+                icon="uil-file-alt" 
+                value={stats.totalSubmissions} 
+                label="Total Submissions" 
+                color="violet"
+              />
             </div>
-            <div className="divide-y divide-white/5">
-              {isLoading ? (
-                <div className="p-5 text-center text-white/50">Loading...</div>
-              ) : recentSubmissions.length === 0 ? (
-                <div className="p-5 text-center text-white/50">No submissions yet</div>
-              ) : (
-                recentSubmissions.map(submission => (
-                <div key={submission.id} className="p-5 hover:bg-white/5 transition-colors cursor-pointer">
-                  <div className="grid grid-cols-[3fr_1fr_1fr_auto] gap-6 items-center">
-                    <div className="min-w-0">
-                      <div className="font-medium text-white text-sm leading-tight" title={submission.title}>
-                        {submission.title}
-                      </div>
-                      <div className="text-xs text-text-muted mt-1">
-                        {submission.team} • {submission.track}
+
+            {/* Recent Submissions */}
+            <div className="glass-card rounded-2xl border">
+              <div className="p-5 border-b border-white/10">
+                <h2 className="text-lg font-semibold text-white">Recent Submissions</h2>
+              </div>
+              <div className="divide-y divide-white/5">
+                {isLoading ? (
+                  <div className="p-5 text-center text-white/50">Loading...</div>
+                ) : recentSubmissions.length === 0 ? (
+                  <div className="p-5 text-center text-white/50">No submissions yet</div>
+                ) : (
+                  recentSubmissions.map(submission => (
+                    <div key={submission.id} className="p-5 hover:bg-white/5 transition-colors cursor-pointer">
+                      <div className="grid grid-cols-[3fr_1fr_1fr_auto] gap-6 items-center">
+                        <div className="min-w-0">
+                          <div className="font-medium text-white text-sm leading-tight" title={submission.title}>
+                            {submission.title}
+                          </div>
+                          <div className="text-xs text-text-muted mt-1">
+                            {submission.team} • {submission.track}
+                          </div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-success/20 text-success`}>
+                          Score: {submission.score?.toFixed(1) || 'N/A'}
+                        </span>
+                        <div className="text-xs text-text-muted whitespace-nowrap">
+                          {submission.updated}
+                        </div>
+                        <button 
+                          onClick={() => navigate('/leaderboard')}
+                          className="text-cyan hover:text-white transition-colors text-sm h-9 px-4 rounded-lg border border-cyan/30 hover:bg-cyan/10 whitespace-nowrap"
+                        >
+                          View
+                        </button>
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-success/20 text-success`}>
-                      Score: {submission.score?.toFixed(1) || 'N/A'}
-                    </span>
-                    <div className="text-xs text-text-muted whitespace-nowrap">
-                      {submission.updated}
-                    </div>
-                    <button 
-                      onClick={() => navigate('/leaderboard')}
-                      className="text-cyan hover:text-white transition-colors text-sm h-9 px-4 rounded-lg border border-cyan/30 hover:bg-cyan/10 whitespace-nowrap"
-                    >
-                      View
-                    </button>
-                  </div>
-                </div>
-              )))
-              }
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          <div className="glass-card rounded-2xl border p-5">
-            <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              <Link to="/judge/queue" className="block">
-                <button className="w-full btn-primary h-12 text-left px-4 flex items-center">
-                  <i className="uil uil-list-ul mr-3 text-xl"></i>
-                  <div>
-                    <div className="font-medium">View Queue</div>
-                    <div className="text-xs opacity-80">Review pending submissions</div>
-                  </div>
-                </button>
-              </Link>
-              <Link to="/judge/scores" className="block">
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="glass-card rounded-2xl border p-5">
+              <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+              <div className="space-y-3">
+                <Link to="/judge/queue" className="block">
+                  <button className="w-full btn-primary h-12 text-left px-4 flex items-center">
+                    <i className="uil uil-list-ul mr-3 text-xl"></i>
+                    <div>
+                      <div className="font-medium">View Queue</div>
+                      <div className="text-xs opacity-80">Review pending submissions</div>
+                    </div>
+                  </button>
+                </Link>
+                <Link to="/judge/scores" className="block">
+                  <button className="w-full btn-secondary h-12 text-left px-4 flex items-center">
+                    <i className="uil uil-chart-line mr-3 text-xl"></i>
+                    <div>
+                      <div className="font-medium">My Scores</div>
+                      <div className="text-xs opacity-70">View scoring history</div>
+                    </div>
+                  </button>
+                </Link>
                 <button className="w-full btn-secondary h-12 text-left px-4 flex items-center">
-                  <i className="uil uil-chart-line mr-3 text-xl"></i>
+                  <i className="uil uil-download-alt mr-3 text-xl"></i>
                   <div>
-                    <div className="font-medium">My Scores</div>
-                    <div className="text-xs opacity-70">View scoring history</div>
+                    <div className="font-medium">Export Results</div>
+                    <div className="text-xs opacity-70">Download CSV report</div>
                   </div>
                 </button>
-              </Link>
-              <button className="w-full btn-secondary h-12 text-left px-4 flex items-center">
-                <i className="uil uil-download-alt mr-3 text-xl"></i>
-                <div>
-                  <div className="font-medium">Export Results</div>
-                  <div className="text-xs opacity-70">Download CSV report</div>
-                </div>
-              </button>
-              <button className="w-full btn-secondary h-12 text-left px-4 flex items-center">
-                <i className="uil uil-book-open mr-3 text-xl"></i>
-                <div>
-                  <div className="font-medium">Guidelines</div>
-                  <div className="text-xs opacity-70">Judging criteria</div>
-                </div>
-              </button>
+                <button className="w-full btn-secondary h-12 text-left px-4 flex items-center">
+                  <i className="uil uil-book-open mr-3 text-xl"></i>
+                  <div>
+                    <div className="font-medium">Guidelines</div>
+                    <div className="text-xs opacity-70">Judging criteria</div>
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Today's Activity */}
-          <div className="glass-card rounded-2xl border p-5">
-            <h2 className="text-lg font-semibold text-white mb-4">Today's Activity</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center h-11">
-                <span className="text-text-secondary">Total Submissions</span>
-                <span className="text-white font-medium">{stats.totalSubmissions}</span>
-              </div>
-              <div className="flex justify-between items-center h-11">
-                <span className="text-text-secondary">Average Score</span>
-                <span className="text-white font-medium">{stats.averageScore}</span>
-              </div>
-              <div className="flex justify-between items-center h-11">
-                <span className="text-text-secondary">Completed Reviews</span>
-                <span className="text-white font-medium">{stats.completedReviews}</span>
+            {/* Today's Activity */}
+            <div className="glass-card rounded-2xl border p-5">
+              <h2 className="text-lg font-semibold text-white mb-4">Today's Activity</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center h-11">
+                  <span className="text-text-secondary">Total Submissions</span>
+                  <span className="text-white font-medium">{stats.totalSubmissions}</span>
+                </div>
+                <div className="flex justify-between items-center h-11">
+                  <span className="text-text-secondary">Average Score</span>
+                  <span className="text-white font-medium">{stats.averageScore}</span>
+                </div>
+                <div className="flex justify-between items-center h-11">
+                  <span className="text-text-secondary">Completed Reviews</span>
+                  <span className="text-white font-medium">{stats.completedReviews}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
     </div>
   );

@@ -27,7 +27,6 @@ const Projects = lazy(() => import('./components/pages/Projects'))
 const Teams = lazy(() => import('./components/pages/Teams'))
 const Submissions = lazy(() => import('./components/pages/Submissions'))
 const PublicLeaderboard = lazy(() => import('./components/pages/PublicLeaderboard'))
-const HackaAgent = lazy(() => import('./components/pages/HackaAgent'))
 const JudgeSubmit = lazy(() => import('./components/pages/JudgeSubmit'))
 const TeamRegistration = lazy(() => import('./components/admin/TeamRegistration'))
 const LogsViewer = lazy(() => import('./components/admin/LogsViewer'))
@@ -35,9 +34,9 @@ const RewardManagement = lazy(() => import('./components/admin/RewardManagement'
 const HackathonManagement = lazy(() => import('./components/admin/HackathonManagement'))
 const JoinHackathon = lazy(() => import('./components/pages/JoinHackathon'))
 const ManualReview = lazy(() => import('./components/judge/ManualReview'))
-const Logs = lazy(() => import('./components/pages/Logs'))
 const CreateTeam = lazy(() => import('./components/pages/CreateTeam'))
 const AcceptInvitation = lazy(() => import('./components/pages/AcceptInvitation'))
+const AcceptJudgeInvitation = lazy(() => import('./components/pages/AcceptJudgeInvitation'))
 import HealthWidget from './components/ui/HealthWidget'
 import KeyboardShortcutsModal from './components/ui/KeyboardShortcutsModal'
 
@@ -71,6 +70,11 @@ function App() {
                   <Route path="/invite/accept" element={
                     <Suspense fallback={<PageLoader />}>
                       <AcceptInvitation />
+                    </Suspense>
+                  } />
+                  <Route path="/judge/accept" element={
+                    <Suspense fallback={<PageLoader />}>
+                      <AcceptJudgeInvitation />
                     </Suspense>
                   } />
 
@@ -233,25 +237,7 @@ function App() {
                     </ProtectedRoute>
                   } />
 
-                  {/* Shared Protected Routes */}
-                  <Route path="/logs" element={
-                    <ProtectedRoute>
-                      <AuthenticatedLayout>
-                        <Suspense fallback={<PageLoader />}>
-                          <Logs />
-                        </Suspense>
-                      </AuthenticatedLayout>
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/hacka-agent" element={
-                    <ProtectedRoute>
-                      <AuthenticatedLayout>
-                        <Suspense fallback={<PageLoader />}>
-                          <HackaAgent />
-                        </Suspense>
-                      </AuthenticatedLayout>
-                    </ProtectedRoute>
-                  } />
+
                 </Routes>
             
             

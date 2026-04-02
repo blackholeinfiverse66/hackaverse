@@ -27,28 +27,36 @@ const Teams = () => {
       
       const data = response.data;
       
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        // /teams/list is already user-specific in backend; take first matching team.
+        let userTeam = data.data[0];
+
         const storedTeamId = localStorage.getItem('team_id');
-        
-        let userTeam = null;
-        
         if (storedTeamId) {
-          userTeam = data.data.find(team => team.team_id === storedTeamId);
+          const teamFromStorage = data.data.find((team) => team.team_id === storedTeamId);
+          if (teamFromStorage) {
+            userTeam = teamFromStorage;
+          }
         }
-        
+
         if (!userTeam && user) {
-          userTeam = data.data.find(team => 
-            team.leader_id === user?.id || 
-            team.leader_id === user?.user_id ||
-            team.members?.some(member => 
-              member.id === user?.id || 
-              member.id === user?.user_id ||
-              member === user?.email ||
-              member.email === user?.email
-            )
-          );
+          userTeam = data.data.find((team) => {
+            const normalizedUserIds = [user?.user_id, user?.id, user?.email].filter(Boolean);
+            if (team.leader_id && normalizedUserIds.includes(team.leader_id)) return true;
+            if (!team.members) return false;
+
+            return team.members.some((member) => {
+              if (typeof member === 'string') {
+                return normalizedUserIds.includes(member);
+              }
+              if (typeof member === 'object') {
+                return normalizedUserIds.includes(member.user_id || member.id || member.email);
+              }
+              return false;
+            });
+          });
         }
-        
+
         if (userTeam) {
           console.log('User team found:', userTeam);
           setMyTeam(userTeam);

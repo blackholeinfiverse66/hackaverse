@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const API_KEY = import.meta.env.VITE_API_KEY || '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778';
 
 const apiClient = axios.create({
@@ -40,6 +40,12 @@ export const invitationAPI = {
 export const judgingAPI = {
   scoreProject: (data) => apiClient.post('/api/judging/score', data),
   getProjectScores: (projectId) => apiClient.get(`/api/judging/scores/${projectId}`)
+};
+
+// Announcements APIs
+export const announcementsAPI = {
+  getAll: () => apiClient.get('/notifications/announcements'),
+  create: (data) => apiClient.post('/notifications/announcements', data)
 };
 
 // Leaderboard APIs

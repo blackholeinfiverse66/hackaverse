@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { apiService } from '../../services/api';
-import { useToast } from '../../hooks/useToast';
 
-const InviteJudgeModal = ({ isOpen, onClose }) => {
+const InviteJudgeModal = ({ isOpen, onClose, onSuccess, onError }) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  const { success, error: showError } = useToast();
 
   const validateForm = () => {
     const newErrors = {};
@@ -25,12 +23,12 @@ const InviteJudgeModal = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
     try {
       await apiService.admin.inviteJudge(email);
-      success('Judge invitation sent successfully!');
+      if (onSuccess) onSuccess();
       setEmail('');
       setErrors({});
       onClose();
     } catch (error) {
-      showError(error.message || 'Failed to send judge invitation');
+      if (onError) onError(error);
     } finally {
       setIsSubmitting(false);
     }

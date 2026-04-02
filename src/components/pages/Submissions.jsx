@@ -313,7 +313,7 @@ const Submissions = () => {
           </div>
           <button
             onClick={() => setShowSubmitModal(true)}
-            className="px-5 py-2.5 bg-cyan hover:bg-cyan/80 text-black font-medium rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-cyan/25 hover:scale-105 flex items-center gap-2"
+            className="px-5 py-2.5 bg-white text-black border border-gray-300 hover:bg-gray-100 font-medium rounded-lg transition-all duration-300 hover:shadow-lg flex items-center gap-2"
           >
             <i className="uil uil-plus text-sm"></i>
             Submit Project

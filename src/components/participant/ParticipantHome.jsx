@@ -8,6 +8,7 @@ const ParticipantHome = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [hackathons, setHackathons] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -15,7 +16,12 @@ const ParticipantHome = () => {
 
   useEffect(() => {
     fetchHackathons();
+    fetchAnnouncements();
     checkUserTeam();
+    
+    // Refresh announcements every 10 seconds
+    const announcementInterval = setInterval(fetchAnnouncements, 10000);
+    return () => clearInterval(announcementInterval);
   }, []);
 
   const fetchHackathons = async () => {
@@ -33,6 +39,24 @@ const ParticipantHome = () => {
       console.error('Failed to fetch hackathons:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications/announcements`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_API_KEY || '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
+        }
+      });
+      const data = await response.json();
+      console.log('[ParticipantHome] Announcements response:', data);
+      if (data.success && data.data) {
+        setAnnouncements(data.data);
+      }
+    } catch (error) {
+      console.error('[ParticipantHome] Failed to fetch announcements:', error);
     }
   };
 
@@ -167,6 +191,21 @@ const ParticipantHome = () => {
                 <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>You're participating!</h3>
                 <p style={{ color: 'var(--text-secondary)' }}>You have joined a hackathon. Check your team progress and submit your project.</p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {announcements.length > 0 && (
+          <div className="glass-card rounded-2xl border p-6">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Announcements</h3>
+            <div className="space-y-3">
+              {announcements.map((announcement) => (
+                <div key={announcement._id || announcement.id} className="bg-white text-black p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-semibold mb-1">{announcement.title}</h4>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{announcement.message}</p>
+                  <small className="text-xs text-gray-500">{new Date(announcement.created_at).toLocaleString()}</small>
+                </div>
+              ))}
             </div>
           </div>
         )}

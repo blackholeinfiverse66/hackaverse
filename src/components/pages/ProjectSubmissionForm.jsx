@@ -248,7 +248,7 @@ const ProjectSubmissionForm = ({ onSuccess, onCancel }) => {
         <button
           type="submit"
           disabled={submitting}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2 rounded-lg transition-colors"
+          className="flex-1 bg-white text-black border border-gray-300 hover:bg-gray-100 disabled:opacity-50 font-medium py-2 rounded-lg transition-colors"
         >
           {submitting ? 'Submitting...' : 'Submit Project'}
         </button>

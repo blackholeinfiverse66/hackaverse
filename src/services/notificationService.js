@@ -1,46 +1,43 @@
 import { apiService } from './api';
+import { API_BASE_URL } from '../constants/appConstants';
+
+const defaultHeaders = () => ({
+  'Content-Type': 'application/json',
+  'X-API-Key': import.meta.env.VITE_API_KEY || '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778',
+  Authorization: localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : undefined
+});
 
 export const notificationService = {
   // Create notification
   create: (notification) => {
-    return fetch('http://localhost:8000/notifications', {
+    return fetch(`${API_BASE_URL}/notifications`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
-      },
+      headers: defaultHeaders(),
       body: JSON.stringify(notification)
     }).then(r => r.json());
   },
 
   // Get user notifications
   getUserNotifications: (userId, unreadOnly = false) => {
-    return fetch(`http://localhost:8000/notifications/user/${userId}?unread_only=${unreadOnly}`, {
-      headers: {
-        'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
-      }
+    return fetch(`${API_BASE_URL}/notifications/user/${userId}?unread_only=${unreadOnly}`, {
+      headers: defaultHeaders()
     }).then(r => r.json());
   },
 
   // Mark as read
   markAsRead: (notificationId) => {
-    return fetch(`http://localhost:8000/notifications/${notificationId}`, {
+    return fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
-      },
+      headers: defaultHeaders(),
       body: JSON.stringify({ read: true })
     }).then(r => r.json());
   },
 
   // Delete notification
   delete: (notificationId) => {
-    return fetch(`http://localhost:8000/notifications/${notificationId}`, {
+    return fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
       method: 'DELETE',
-      headers: {
-        'X-API-Key': '2b899caf7e3aea924c96761326bdded5162da31a9d1fdba59a2a451d2335c778'
-      }
+      headers: defaultHeaders()
     }).then(r => r.json());
   },
 

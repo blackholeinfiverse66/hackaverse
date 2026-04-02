@@ -172,7 +172,7 @@ export const apiService = {
 
   // Admin endpoints
   admin: {
-    inviteJudge: (email) => api.post('/api/admin/invite-judge', { email, role: 'Judge' }),
+    inviteJudge: (email) => api.post('/judge/invitations/send', { email, hackathon_name: 'HackaVerse' }),
     inviteParticipant: (email, hackathonId) => api.post('/api/admin/invite-participant', { email, hackathonId }),
     getDashboard: () => api.get('/api/admin/dashboard'),
     getRewards: () => api.get('/reward').catch(() => Promise.resolve({ data: [] })),
@@ -316,6 +316,12 @@ export const apiService = {
     markRead: (notificationId) => api.patch(`/notifications/read/${notificationId}`),
     markAllRead: (userId) => api.patch(`/notifications/read-all/${userId}`),
     create: (data) => api.post('/notifications/create', data),
+  },
+
+  // Announcements
+  announcements: {
+    getAll: () => api.get('/notifications/announcements'),
+    create: (data) => api.post('/notifications/announcements', data),
   },
 };
 
