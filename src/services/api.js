@@ -172,27 +172,27 @@ export const apiService = {
 
   // Admin endpoints
   admin: {
-    inviteJudge: (email) => api.post('/judge/invitations/send', { email, hackathon_name: 'HackaVerse' }),
+    inviteJudge: (email) => api.post('/api/judge/invitations/send', { email, hackathon_name: 'HackaVerse' }),
     inviteParticipant: (email, hackathonId) => api.post('/api/admin/invite-participant', { email, hackathonId }),
     getDashboard: () => api.get('/api/admin/dashboard'),
-    getRewards: () => api.get('/reward').catch(() => Promise.resolve({ data: [] })),
+    getRewards: () => api.get('/api/reward').catch(() => Promise.resolve({ data: [] })),
     applyReward: (data) => {
       const validationErrors = validateRewardData(data);
       if (validationErrors) {
         return Promise.reject(new Error(validationErrors.join(', ')));
       }
-      return api.post('/reward', data);
+      return api.post('/api/reward', data);
     },
     getLogs: (params) => {
       if (params && (params.limit && isNaN(params.limit))) {
         return Promise.reject(new Error('Invalid limit parameter'));
       }
-      return api.get('/system/logs', { params });
+      return api.get('/api/system/logs', { params });
     },
-    registerTeam: (data) => api.post('/registration', data),
-    getTeams: () => api.get('/teams/list'),
-    getProjects: () => api.get('/projects'),
-    getSubmissions: () => api.get('/submissions'),
+    registerTeam: (data) => api.post('/api/registration', data),
+    getTeams: () => api.get('/api/teams'),
+    getProjects: () => api.get('/api/projects'),
+    getSubmissions: () => api.get('/api/submissions'),
     getParticipants: () => api.get('/api/hackathons/{id}/participants').catch(() => Promise.resolve({ data: [] })),
   },
 
@@ -213,40 +213,40 @@ export const apiService = {
 
   // Teams
   teams: {
-    getAll: () => api.get('/teams/list'),
-    getById: (id) => api.get(`/teams/${id}`),
-    create: (data) => api.post('/teams/create', data),
-    update: (id, data) => api.patch(`/teams/${id}`, data).catch(() => Promise.resolve({ data: null })),
-    delete: (id) => api.delete(`/teams/${id}`).catch(() => Promise.resolve({ data: null })),
-    join: (id) => api.post(`/teams/${id}/join`, {}).catch(() => Promise.resolve({ data: null })),
-    leave: (id) => api.post(`/teams/${id}/leave`, {}).catch(() => Promise.resolve({ data: null })),
-    sendInvitation: (data) => api.post('/teams/invitations/send', data),
-    acceptInvitation: (token) => api.post('/teams/invitations/accept', { token }),
-    acceptInvitationWithDetails: (data) => api.post('/teams/invitations/accept-with-details', data),
-    getInvitationDetails: (token) => api.get(`/teams/invitations/${token}`),
-    getReceivedInvitations: () => api.get('/teams/invitations/received'),
-    getSentInvitations: () => api.get('/teams/invitations/sent'),
-    respondToInvitation: (data) => api.post('/teams/invitations/respond', data),
-    updateTeamMember: (data) => api.put('/teams/members/update', data),
-    updateTeamDetails: (data) => api.put('/teams/update-details', data),
-    getTeamDetails: (teamId) => api.get(`/teams/${teamId}/details`),
-    getTeamMembers: (teamId) => api.get(`/teams/${teamId}/members`),
+    getAll: () => api.get('/api/teams'),
+    getById: (id) => api.get(`/api/teams/${id}`),
+    create: (data) => api.post('/api/teams', data),
+    update: (id, data) => api.patch(`/api/teams/${id}`, data).catch(() => Promise.resolve({ data: null })),
+    delete: (id) => api.delete(`/api/teams/${id}`).catch(() => Promise.resolve({ data: null })),
+    join: (id) => api.post(`/api/teams/${id}/join`, {}).catch(() => Promise.resolve({ data: null })),
+    leave: (id) => api.post(`/api/teams/${id}/leave`, {}).catch(() => Promise.resolve({ data: null })),
+    sendInvitation: (data) => api.post('/api/teams/invitations/send', data),
+    acceptInvitation: (token) => api.post('/api/teams/invitations/accept', { token }),
+    acceptInvitationWithDetails: (data) => api.post('/api/teams/invitations/accept-with-details', data),
+    getInvitationDetails: (token) => api.get(`/api/teams/invitations/${token}`),
+    getReceivedInvitations: () => api.get('/api/teams/invitations/received'),
+    getSentInvitations: () => api.get('/api/teams/invitations/sent'),
+    respondToInvitation: (data) => api.post('/api/teams/invitations/respond', data),
+    updateTeamMember: (data) => api.put('/api/teams/members/update', data),
+    updateTeamDetails: (data) => api.put('/api/teams/update-details', data),
+    getTeamDetails: (teamId) => api.get(`/api/teams/${teamId}/details`),
+    getTeamMembers: (teamId) => api.get(`/api/teams/${teamId}/members`),
   },
 
   // Submissions
   submissions: {
-    getAll: () => api.get('/submissions'),
-    getById: (id) => api.get(`/submissions/${id}`),
-    getByTeam: (teamId) => api.get(`/submissions/team/${teamId}`),
-    create: (data) => api.post('/submissions', data),
-    update: (id, data) => api.patch(`/submissions/${id}`, data).catch(() => Promise.resolve({ data: null })),
+    getAll: () => api.get('/api/submissions'),
+    getById: (id) => api.get(`/api/submissions/${id}`),
+    getByTeam: (teamId) => api.get(`/api/submissions/team/${teamId}`),
+    create: (data) => api.post('/api/submissions', data),
+    update: (id, data) => api.patch(`/api/submissions/${id}`, data).catch(() => Promise.resolve({ data: null })),
   },
 
   // Leaderboard
   leaderboard: {
     get: (hackathonId, params = {}) => {
       const { limit = 50 } = params;
-      return api.get(`/api/hackathons/${hackathonId}/leaderboard`, { params: { limit } });
+      return api.get(`/api/leaderboard/${hackathonId}`, { params: { limit } });
     },
     getByTrack: (track) => Promise.resolve({ data: [] }),
   },
@@ -264,7 +264,7 @@ export const apiService = {
         event_id: data.event_id || 'default_event',
         workspace_id: data.workspace_id || null
       };
-      return api.post('/judge/score', payload);
+      return api.post('/api/judge/score', payload);
     },
     submitAndScore: (data) => {
       if (!data.submission_text || data.submission_text.trim().length === 0) {
@@ -278,9 +278,9 @@ export const apiService = {
         workspace_id: data.workspace_id || null,
         request_id: data.request_id || null
       };
-      return api.post('/judge/submit', payload);
+      return api.post('/api/judge/submit', payload);
     },
-    getRubric: () => api.get('/judge/rubric'),
+    getRubric: () => api.get('/api/judge/rubric'),
     batchJudge: (data) => {
       if (!data.submissions || data.submissions.length === 0) {
         return Promise.reject(new Error('At least one submission is required'));
@@ -291,37 +291,37 @@ export const apiService = {
         event_id: data.event_id || 'default_event',
         workspace_id: data.workspace_id || null
       };
-      return api.post('/judge/batch', payload);
+      return api.post('/api/judge/batch', payload);
     },
     getRankings: (params = {}) => {
       const { tenant_id = 'default', event_id = 'default_event', limit = 50 } = params;
-      return api.get('/judge/rank', { params: { tenant_id, event_id, limit } });
+      return api.get('/api/judge/rank', { params: { tenant_id, event_id, limit } });
     },
-    getPendingSubmissions: () => api.get('/judge/submissions/pending'),
-    submitReview: (data) => api.post('/judge/review/submit', data),
-    getScores: (projectId) => api.get(`/judging/scores/${projectId}`),
+    getPendingSubmissions: () => api.get('/api/judge/submissions/pending'),
+    submitReview: (data) => api.post('/api/judge/review/submit', data),
+    getScores: (projectId) => api.get(`/api/judging/scores/${projectId}`),
   },
 
   // User profile
   user: {
-    getProfile: () => api.get('/auth/me').catch(() => Promise.resolve({ data: null })),
-    updateProfile: (data) => api.patch('/user/profile', data).catch(() => Promise.resolve({ data: null })),
-    getStats: () => api.get('/user/stats').catch(() => Promise.resolve({ data: null })),
+    getProfile: () => api.get('/api/auth/me').catch(() => Promise.resolve({ data: null })),
+    updateProfile: (data) => api.patch('/api/user/profile', data).catch(() => Promise.resolve({ data: null })),
+    getStats: () => api.get('/api/user/stats').catch(() => Promise.resolve({ data: null })),
   },
 
   // Notifications
   notifications: {
-    getAll: (userId) => api.get(`/notifications/user/${userId}`),
-    getUnread: (userId) => api.get(`/notifications/user/${userId}?unread_only=true`),
-    markRead: (notificationId) => api.patch(`/notifications/read/${notificationId}`),
-    markAllRead: (userId) => api.patch(`/notifications/read-all/${userId}`),
-    create: (data) => api.post('/notifications/create', data),
+    getAll: (userId) => api.get(`/api/notifications/user/${userId}`),
+    getUnread: (userId) => api.get(`/api/notifications/user/${userId}?unread_only=true`),
+    markRead: (notificationId) => api.patch(`/api/notifications/read/${notificationId}`),
+    markAllRead: (userId) => api.patch(`/api/notifications/read-all/${userId}`),
+    create: (data) => api.post('/api/notifications/create', data),
   },
 
   // Announcements
   announcements: {
-    getAll: () => api.get('/notifications/announcements'),
-    create: (data) => api.post('/notifications/announcements', data),
+    getAll: () => api.get('/api/notifications/announcements'),
+    create: (data) => api.post('/api/notifications/announcements', data),
   },
 };
 
